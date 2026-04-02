@@ -34,10 +34,12 @@ const State = {
 
 // ===================== INIT =====================
 function initApp() {
+  showLoading('กำลังเริ่มระบบ...');
   initDefaultData();
   registerServiceWorker();
   setupNetworkListeners();
   setupSyncTimer();
+  loadSettings();
   renderAll();
   checkShopStatus();
   hideLoading();
@@ -133,13 +135,15 @@ async function syncToSheets(isClosing = false) {
       products: DB.get('products') || [],
     };
 
+    // ใช้ text/plain เพื่อหลีกเลี่ยง CORS preflight ที่ Google Apps Script ไม่รองรับ
     const res = await fetch(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify(payload),
     });
 
-    if (res.ok) {
+    // Apps Script redirect (302) ถือว่าสำเร็จ, หรือ status 200
+    if (res.ok || res.status === 0) {
       // Clear synced queue
       DB.set('syncQueue', []);
       State.lastSyncTime = new Date();
@@ -148,10 +152,12 @@ async function syncToSheets(isClosing = false) {
 
       if (isClosing) {
         // Pull fresh stock from Sheets after close
-        const data = await res.json();
-        if (data.updatedStock) {
-          DB.set('products', data.updatedStock);
-        }
+        try {
+          const data = await res.json();
+          if (data.updatedStock) {
+            DB.set('products', data.updatedStock);
+          }
+        } catch(_) { /* ไม่มี updatedStock ก็ไม่เป็นไร */ }
       }
     } else {
       throw new Error('Sync failed: ' + res.status);
@@ -177,17 +183,23 @@ async function syncFromSheets() {
 
   showLoading('กำลังดึงสต็อกจาก Google Sheets...');
   try {
-    const res = await fetch(url + '?action=get_stock', { method: 'GET' });
-    if (res.ok) {
-      const data = await res.json();
-      if (data.products) {
-        DB.set('products', data.products);
-        renderProducts();
-        renderStockList();
-        showToast('✅ ดึงสต็อกล่าสุดจาก Sheets แล้ว', 'success');
-      }
+    const res = await fetch(url + '?action=get_stock', {
+      method: 'GET',
+      redirect: 'follow',
+    });
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); } catch(_) { throw new Error('Invalid JSON response'); }
+    if (data.ok && data.products) {
+      DB.set('products', data.products);
+      renderProducts();
+      renderStockList();
+      showToast('✅ ดึงสต็อกล่าสุดจาก Sheets แล้ว', 'success');
+    } else {
+      throw new Error(data.message || 'No products returned');
     }
   } catch(e) {
+    console.error('syncFromSheets error:', e);
     showToast('⚠️ ดึงข้อมูลไม่สำเร็จ — ใช้ข้อมูลในเครื่อง', 'error');
   }
   hideLoading();
