@@ -34,12 +34,10 @@ const State = {
 
 // ===================== INIT =====================
 function initApp() {
-  showLoading('กำลังเริ่มระบบ...');
   initDefaultData();
   registerServiceWorker();
   setupNetworkListeners();
   setupSyncTimer();
-  loadSettings();
   renderAll();
   checkShopStatus();
   hideLoading();
