@@ -39,7 +39,6 @@ function initApp() {
   registerServiceWorker();
   setupNetworkListeners();
   setupSyncTimer();
-  loadSettings();
   renderAll();
   checkShopStatus();
   hideLoading();
@@ -66,12 +65,15 @@ function initDefaultData() {
 async function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js');
+      const reg = await navigator.serviceWorker.register('./sw.js');
       console.log('SW registered:', reg.scope);
       navigator.serviceWorker.addEventListener('message', e => {
         if (e.data?.type === 'DO_SYNC') syncToSheets();
       });
-    } catch(e) { console.log('SW failed:', e); }
+    } catch(e) {
+      // SW ไม่สำคัญต่อการทำงานหลัก — app ยังใช้งานได้ตามปกติ
+      console.warn('SW not available (offline PWA disabled):', e.message);
+    }
   }
 }
 
