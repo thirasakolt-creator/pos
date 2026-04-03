@@ -4,7 +4,7 @@
   "description": "ระบบ POS ออฟไลน์ พร้อม sync Google Sheets",
   "start_url": "/pos/",
   "display": "standalone",
-  "orientation": "landscape",
+  "orientation": "Portrait",
   "background_color": "#0d0f14",
   "theme_color": "#00e5a0",
   "lang": "th",
