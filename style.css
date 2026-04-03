@@ -67,11 +67,13 @@ body {
 /* ══════════════════════════════════════════
    LOADING
 ══════════════════════════════════════════ */
+/* Loading overlay — แสดงตั้งแต่แรก, JS จะ add .hidden เมื่อเสร็จ */
 .loading-overlay {
   position: fixed; inset: 0; z-index: 9999;
   background: var(--bg);
   display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 16px;
+  transition: opacity 0.3s;
 }
 .loading-overlay.hidden { display: none; }
 .loading-spinner {
@@ -488,5 +490,4 @@ body {
 }
 .stock-emoji { font-size: clamp(26px,4vw,38px); flex-shrink: 0; }
 .stock-info  { flex: 1; min-width: 0; }
-.stock-name  { font-weight: 700; font-size: var(--fs-base); }
-.stock-meta  { font-size: var(--fs-xs); color: var(-
+.stock-name  { fo
