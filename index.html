@@ -2,7 +2,12 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="screen-orientation" content="landscape">
+<meta name="x5-orientation" content="landscape">
+<meta name="full-screen" content="yes">
+<meta name="x5-fullscreen" content="true">
+<meta name="browsermode" content="application">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -318,7 +323,7 @@
       <button class="np" onclick="numInput('7')">7</button><button class="np" onclick="numInput('8')">8</button><button class="np" onclick="numInput('9')">9</button>
       <button class="np" onclick="numInput('00')">00</button><button class="np" onclick="numInput('0')">0</button><button class="np" onclick="numDel()">⌫</button>
     </div>
-    <div class="change-row"><span>เงินทอน</span><span id="changeDisp" class="change-amt">฿0.00</span></div>
+    <div class="change-row"><span class="change-label">เงินทอน</span><span id="changeDisp" class="change-amt">฿0.00</span></div>
     <div class="btn-group mt-8">
       <button class="btn btn-secondary" onclick="closeModal('checkoutModal')">ยกเลิก</button>
       <button class="btn btn-primary" onclick="completeSale()">✅ ยืนยัน</button>
@@ -374,23 +379,4 @@
     <div class="ig"><label class="il">ตำแหน่ง</label>
       <select class="input" id="newStaffRole"><option value="staff">👤 พนักงานขาย</option><option value="senior">⭐ พนักงานอาวุโส</option></select>
     </div>
-    <div class="btn-group mt-8">
-      <button class="btn btn-secondary" onclick="closeModal('addStaffModal')">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="saveNewStaff()">💾 บันทึก</button>
-    </div>
-  </div>
-</div>
-
-<!-- RECEIPT -->
-<div id="receiptModal" class="modal-overlay">
-  <div class="modal">
-    <div class="mhandle"></div>
-    <div class="mtitle">🧾 ใบเสร็จ</div>
-    <div id="receiptContent"></div>
-    <button class="btn btn-primary mt-8" onclick="closeModal('receiptModal')">✅ เสร็จสิ้น</button>
-  </div>
-</div>
-
-<script src="app.js"></script>
-</body>
-</html>
+    <div
