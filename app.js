@@ -54,17 +54,18 @@ function initApp() {
   initDefaultData();
   setupNetwork();
   setupClock();
+  // registerSW ทำงาน background ไม่ block
   registerSW();
 
   // ── ตรวจว่ามี session ค้างอยู่ไหม ──
   const sess = DB.get('session');
   if (sess && sess.active) {
-    enterApp(false);  // ไม่ต้องดึง Sheets ใหม่
+    enterApp(false);
   } else {
     showScreen('login');
     showLoginStep('step-role');
   }
-  hideLoading();
+  _hideLoadingEarly();
 }
 
 function initDefaultData() {
@@ -86,8 +87,8 @@ function initDefaultData() {
   ]);
 }
 
-function hideLoading() {
-  document.getElementById('loadingOverlay').classList.add('hidden');
+function _hideLoadingEarly() {
+  document.getElementById('loadingOverlay')?.classList.add('hidden');
 }
 
 function showScreen(name) {
@@ -562,4 +563,4 @@ function manualSync() {
 // ═══════════════════════════════════════════
 function showTab(tab, btn) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  if (btn) btn.classList.add('act
+  if
