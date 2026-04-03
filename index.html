@@ -379,4 +379,23 @@
     <div class="ig"><label class="il">ตำแหน่ง</label>
       <select class="input" id="newStaffRole"><option value="staff">👤 พนักงานขาย</option><option value="senior">⭐ พนักงานอาวุโส</option></select>
     </div>
-    <div
+    <div class="btn-group mt-8">
+      <button class="btn btn-secondary" onclick="closeModal('addStaffModal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveNewStaff()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- RECEIPT -->
+<div id="receiptModal" class="modal-overlay">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mtitle">🧾 ใบเสร็จ</div>
+    <div id="receiptContent"></div>
+    <button class="btn btn-primary mt-8" onclick="closeModal('receiptModal')">✅ เสร็จสิ้น</button>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
