@@ -446,13 +446,21 @@ function updateStatusBadge() {
     el.innerHTML='<div class="status-dot"></div>ออนไลน์';
   }
 }
+// ── Sync timer (heartbeat flush)
+let _syncInProgress = false;
+let _syncRetryTimer = null;
+
 function setupSyncTimer() {
   if (_syncTimer) clearInterval(_syncTimer);
-  _syncTimer = setInterval(()=>{ if(navigator.onLine) syncToSheets(); }, CONFIG.SYNC_MS);
+  // heartbeat ทุก 5 นาที
+  _syncTimer = setInterval(() => {
+    if (navigator.onLine && !_syncInProgress) flushSyncQueue();
+  }, 5 * 60 * 1000);
 }
+
 function renderSyncChip() {
   const el = document.getElementById('syncChip'); if (!el) return;
-  const q = DB.get('syncQueue')||[];
+  const q = DB.get('syncQueue') || [];
   if (q.length > 0) {
     el.textContent = `⏳ รอ ${q.length}`;
     el.className = 'sync-chip badge-yellow';
@@ -461,33 +469,69 @@ function renderSyncChip() {
     el.className = 'sync-chip badge-green';
   }
 }
+
+// เพิ่มเข้า queue แล้ว trigger ทันที
 function addToSyncQueue(item) {
-  const q = DB.get('syncQueue')||[];
+  const q = DB.get('syncQueue') || [];
   q.push(item);
-  DB.set('syncQueue',q);
+  DB.set('syncQueue', q);
   renderSyncChip();
+  if (navigator.onLine) setTimeout(() => flushSyncQueue(), 300);
 }
 
-async function syncToSheets(isClose=false) {
-  const s = DB.get('settings')||{};
+// ส่งแบบทยอย batch
+async function flushSyncQueue() {
+  if (_syncInProgress) return;
+  const s = DB.get('settings') || {};
   const url = s.sheetsUrl || CONFIG.SHEETS_URL;
   if (!url || !navigator.onLine) return;
-  const q = DB.get('syncQueue')||[];
-  if (q.length===0 && !isClose) return;
+  const q = DB.get('syncQueue') || [];
+  if (q.length === 0) return;
+  _syncInProgress = true;
   updateStatusBadge();
+  const batch = q.slice(0, 5);
   try {
-    const payload = { action: isClose?'close_shop':'sync', timestamp:new Date().toISOString(), sales:q, products:DB.get('products')||[], staff:(DB.get('session')||{}).name||'—' };
-    const res = await fetch(url, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(payload) });
-    if (res.ok || res.status===0) {
-      DB.set('syncQueue',[]);
+    const payload = {
+      action: 'sync', timestamp: new Date().toISOString(),
+      sales: batch.filter(x => !x.type),
+      products: DB.get('products') || [],
+      staff: (DB.get('session') || {}).name || '—',
+    };
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    if (res.ok || res.status === 0) {
+      const remaining = q.slice(batch.length);
+      DB.set('syncQueue', remaining);
       DB.set('lastSync', new Date().toISOString());
-      showToast(`✅ Sync สำเร็จ ${q.length} รายการ`,'success');
-    } else throw new Error('HTTP '+res.status);
-  } catch(e) {
-    console.error('Sync error:',e);
-    showToast('⚠️ Sync ไม่สำเร็จ','error');
+      _syncInProgress = false;
+      if (remaining.length > 0) {
+        showToast(`✅ Sync ${batch.length} รายการ (เหลือ ${remaining.length})`, 'success');
+        setTimeout(() => flushSyncQueue(), 500);
+      } else {
+        showToast(`✅ Sync เสร็จ ${batch.length} รายการ`, 'success');
+      }
+    } else { throw new Error('HTTP ' + res.status); }
+  } catch (e) {
+    console.error('Sync error:', e);
+    _syncInProgress = false;
+    if (_syncRetryTimer) clearTimeout(_syncRetryTimer);
+    _syncRetryTimer = setTimeout(() => { if (navigator.onLine) flushSyncQueue(); }, 30000);
+    showToast('⚠️ Sync ไม่สำเร็จ — ลองใหม่ใน 30 วิ', 'error');
   }
   renderSyncChip(); updateStatusBadge();
+}
+
+async function syncToSheets(isClose = false) {
+  if (!isClose) { flushSyncQueue(); return; }
+  // ปิดร้าน — ส่งทั้งหมด
+  const s = DB.get('settings') || {};
+  const url = s.sheetsUrl || CONFIG.SHEETS_URL;
+  if (!url || !navigator.onLine) return;
+  const q = DB.get('syncQueue') || [];
+  try {
+    const payload = { action: 'close_shop', timestamp: new Date().toISOString(), sales: q, products: DB.get('products') || [], staff: (DB.get('session') || {}).name || '—' };
+    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+    if (res.ok || res.status === 0) { DB.set('syncQueue', []); DB.set('lastSync', new Date().toISOString()); }
+  } catch (e) { console.error('Close sync error:', e); }
 }
 
 async function syncFromSheets() {
@@ -508,8 +552,9 @@ async function syncFromSheets() {
 }
 
 function manualSync() {
-  if (!navigator.onLine) { showToast('⚠️ ไม่มีอินเตอร์เน็ต','error'); return; }
-  syncToSheets();
+  if (!navigator.onLine) { showToast('⚠️ ไม่มีอินเตอร์เน็ต', 'error'); return; }
+  _syncInProgress = false;
+  flushSyncQueue();
 }
 
 // ═══════════════════════════════════════════
@@ -517,52 +562,4 @@ function manualSync() {
 // ═══════════════════════════════════════════
 function showTab(tab, btn) {
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
-  closeAllTabs();
-  if (tab === 'sell') return;
-  const el = document.getElementById('tab-'+tab);
-  if (!el) return;
-  el.style.display = 'flex';
-  if (tab==='stock')   { renderStockList(); }
-  if (tab==='history') { renderHistory(); }
-}
-
-function closeTab(tab) {
-  const el = document.getElementById('tab-'+tab);
-  if (el) el.style.display = 'none';
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
-  const first = document.getElementById('nav-sell');
-  if (first) first.classList.add('active');
-}
-
-function closeAllTabs() {
-  ['stock','history','settings'].forEach(t=>{
-    const el = document.getElementById('tab-'+t);
-    if (el) el.style.display = 'none';
-  });
-}
-
-// ═══════════════════════════════════════════
-//  PRODUCTS
-// ═══════════════════════════════════════════
-let _currentCat = 'all';
-
-function filterCat(cat, el) {
-  _currentCat = cat;
-  document.querySelectorAll('.cat-tab').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');
-  renderProducts();
-}
-
-function renderProducts() {
-  const prods = DB.get('products')||[];
-  const q = (getValue('searchInput')||'').toLowerCase();
-  let list = _currentCat==='all' ? prods : prods.filter(p=>p.cat===_currentCat);
-  if (q) list = list.filter(p=>p.name.toLowerCase().includes(q));
-  const grid = document.getElementById('productGrid');
-  if (!grid) return;
-  if (list.length===0) { grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--t3);padding:24px">ไม่พบสินค้า</div>'; return; }
-  grid.innerHTML = list.map(p=>{
-    const st = p.stock===0?'out':p.stock<=p.minStock?'low':'ok';
-    const badge = st==='out'?'<span class="prod-badge badge-red">หมด</span>'
-     
+  if (btn) btn.classList.add('act
