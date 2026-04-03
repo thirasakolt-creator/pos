@@ -6,137 +6,124 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="POS Pro">
 <meta name="theme-color" content="#0a0c10">
-<title>POS Pro v2</title>
+<title>POS Pro v3</title>
 <link rel="manifest" href="manifest.json">
-<link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ==================== LOADING OVERLAY ==================== -->
-<div class="loading-overlay" id="loadingOverlay">
+<!-- LOADING -->
+<div id="loadingOverlay" class="loading-overlay">
   <div class="loading-spinner"></div>
-  <div class="loading-text" id="loadingText">กำลังเริ่มระบบ...</div>
+  <div id="loadingText" class="loading-text">กำลังเริ่มระบบ...</div>
 </div>
 
-<!-- ==================== TOAST ==================== -->
-<div class="toast" id="toast"></div>
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
 
-<!-- ==================== SCREEN: LOGIN ==================== -->
-<div class="screen active" id="screen-login">
+<!-- ══════════════════════════════════════════
+     SCREEN: LOGIN
+══════════════════════════════════════════ -->
+<div id="screen-login" class="screen">
   <div class="login-wrap">
-    <div class="login-logo">
-      <div class="login-logo-icon">POS</div>
-      <div class="login-logo-sub">Pro</div>
+    <div class="login-brand">
+      <span class="brand-pos">POS</span><span class="brand-pro">Pro</span>
+      <div class="brand-sub">ระบบจัดการร้านค้า</div>
     </div>
-    <div class="login-card" id="loginCard">
-      <!-- Step 1: Manager unlocks terminal -->
-      <div class="login-step active" id="step-mgr">
-        <div class="login-step-title">🔐 ผู้จัดการยืนยันตัวตน</div>
-        <div class="login-step-sub">ใส่รหัสผู้จัดการเพื่อเปิดเครื่อง</div>
-        <div class="pin-display" id="mgrPinDisplay">• • • • • •</div>
-        <div class="numpad-login">
-          <button class="npl-btn" onclick="loginInput('mgr','1')">1</button>
-          <button class="npl-btn" onclick="loginInput('mgr','2')">2</button>
-          <button class="npl-btn" onclick="loginInput('mgr','3')">3</button>
-          <button class="npl-btn" onclick="loginInput('mgr','4')">4</button>
-          <button class="npl-btn" onclick="loginInput('mgr','5')">5</button>
-          <button class="npl-btn" onclick="loginInput('mgr','6')">6</button>
-          <button class="npl-btn" onclick="loginInput('mgr','7')">7</button>
-          <button class="npl-btn" onclick="loginInput('mgr','8')">8</button>
-          <button class="npl-btn" onclick="loginInput('mgr','9')">9</button>
-          <button class="npl-btn npl-clear" onclick="loginClear('mgr')">C</button>
-          <button class="npl-btn" onclick="loginInput('mgr','0')">0</button>
-          <button class="npl-btn npl-del" onclick="loginDel('mgr')">⌫</button>
-        </div>
-        <button class="btn-login-confirm" onclick="confirmMgrPin()">✓ ยืนยัน</button>
-      </div>
 
-      <!-- Step 2: Manager selects staff + sets float -->
-      <div class="login-step" id="step-select-staff">
-        <div class="login-step-title">👥 เลือกพนักงานเข้างาน</div>
-        <div class="login-step-sub">ผจก: <span id="mgrNameDisplay" style="color:var(--accent)">—</span></div>
-        <div class="staff-list" id="staffSelectList"></div>
-        <div class="float-input-wrap">
-          <label class="input-label">💵 เงินทอนในเครื่อง (฿)</label>
-          <input class="input" type="number" id="floatAmount" placeholder="0" min="0">
-        </div>
-        <div class="btn-group mt-8">
-          <button class="btn btn-secondary" onclick="backToMgr()">← ย้อนกลับ</button>
-          <button class="btn btn-primary" onclick="confirmStaffSelect()">ยืนยัน →</button>
-        </div>
-      </div>
-
-      <!-- Step 3: Staff enters their PIN -->
-      <div class="login-step" id="step-staff-pin">
-        <div class="login-step-title">🧑‍💼 พนักงานกรอกรหัส</div>
-        <div class="login-step-sub">คุณ <span id="selectedStaffName" style="color:var(--accent3)">—</span></div>
-        <div class="pin-display" id="staffPinDisplay">• • • • • •</div>
-        <div class="numpad-login">
-          <button class="npl-btn" onclick="loginInput('staff','1')">1</button>
-          <button class="npl-btn" onclick="loginInput('staff','2')">2</button>
-          <button class="npl-btn" onclick="loginInput('staff','3')">3</button>
-          <button class="npl-btn" onclick="loginInput('staff','4')">4</button>
-          <button class="npl-btn" onclick="loginInput('staff','5')">5</button>
-          <button class="npl-btn" onclick="loginInput('staff','6')">6</button>
-          <button class="npl-btn" onclick="loginInput('staff','7')">7</button>
-          <button class="npl-btn" onclick="loginInput('staff','8')">8</button>
-          <button class="npl-btn" onclick="loginInput('staff','9')">9</button>
-          <button class="npl-btn npl-clear" onclick="loginClear('staff')">C</button>
-          <button class="npl-btn" onclick="loginInput('staff','0')">0</button>
-          <button class="npl-btn npl-del" onclick="loginDel('staff')">⌫</button>
-        </div>
-        <button class="btn-login-confirm" onclick="confirmStaffPin()">✓ เข้าสู่ระบบ</button>
-        <button class="btn-back-link" onclick="backToStaffSelect()">← เปลี่ยนพนักงาน</button>
-      </div>
-
-      <!-- Step 4: Count float cash -->
-      <div class="login-step" id="step-count-float">
-        <div class="login-step-title">💰 นับเงินในเครื่อง</div>
-        <div class="login-step-sub">ผจก ใส่ไว้ <span id="floatAmountDisplay" style="color:var(--warn)">฿0</span> — กรุณานับให้ตรง</div>
-        <div class="float-count-grid" id="floatCountGrid">
-          <div class="float-denom-row"><span class="denom-label">ธนบัตร 1,000</span><div class="denom-ctrl"><button onclick="adjDenom(1000,-1)">−</button><span id="d1000">0</span><button onclick="adjDenom(1000,1)">+</button></div><span class="denom-total" id="t1000">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">ธนบัตร 500</span><div class="denom-ctrl"><button onclick="adjDenom(500,-1)">−</button><span id="d500">0</span><button onclick="adjDenom(500,1)">+</button></div><span class="denom-total" id="t500">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">ธนบัตร 100</span><div class="denom-ctrl"><button onclick="adjDenom(100,-1)">−</button><span id="d100">0</span><button onclick="adjDenom(100,1)">+</button></div><span class="denom-total" id="t100">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">ธนบัตร 50</span><div class="denom-ctrl"><button onclick="adjDenom(50,-1)">−</button><span id="d50">0</span><button onclick="adjDenom(50,1)">+</button></div><span class="denom-total" id="t50">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">ธนบัตร 20</span><div class="denom-ctrl"><button onclick="adjDenom(20,-1)">−</button><span id="d20">0</span><button onclick="adjDenom(20,1)">+</button></div><span class="denom-total" id="t20">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">เหรียญ 10</span><div class="denom-ctrl"><button onclick="adjDenom(10,-1)">−</button><span id="d10">0</span><button onclick="adjDenom(10,1)">+</button></div><span class="denom-total" id="t10">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">เหรียญ 5</span><div class="denom-ctrl"><button onclick="adjDenom(5,-1)">−</button><span id="d5">0</span><button onclick="adjDenom(5,1)">+</button></div><span class="denom-total" id="t5">฿0</span></div>
-          <div class="float-denom-row"><span class="denom-label">เหรียญ 1</span><div class="denom-ctrl"><button onclick="adjDenom(1,-1)">−</button><span id="d1">0</span><button onclick="adjDenom(1,1)">+</button></div><span class="denom-total" id="t1">฿0</span></div>
-        </div>
-        <div class="float-total-bar">รวมที่นับได้: <span id="floatCountTotal" style="color:var(--accent);font-weight:800">฿0</span></div>
-        <div class="float-diff-bar" id="floatDiffBar"></div>
-        <button class="btn-login-confirm" onclick="confirmFloat()">✓ ยืนยันและเข้าระบบ</button>
-      </div>
+    <!-- Role picker -->
+    <div id="step-role" class="login-card">
+      <div class="lc-title">เลือกบทบาทของคุณ</div>
+      <button class="role-btn role-mgr" onclick="chooseRole('mgr')">
+        <span class="role-icon">👔</span>
+        <span class="role-label">ผู้จัดการ</span>
+        <span class="role-desc">ตั้งค่า / ขายสินค้า / จัดการระบบ</span>
+      </button>
+      <button class="role-btn role-staff" onclick="chooseRole('staff')">
+        <span class="role-icon">🧑‍💼</span>
+        <span class="role-label">พนักงาน</span>
+        <span class="role-desc">เข้ากะขาย</span>
+      </button>
     </div>
+
+    <!-- Manager PIN -->
+    <div id="step-mgr-pin" class="login-card" style="display:none">
+      <button class="back-btn" onclick="backToRole()">← กลับ</button>
+      <div class="lc-title">👔 ผู้จัดการ</div>
+      <div class="lc-sub">กรอกรหัส PIN</div>
+      <div id="mgrPinDots" class="pin-dots"></div>
+      <div class="numpad-login">
+        <button class="npl" onclick="pinKey('mgr',1)">1</button><button class="npl" onclick="pinKey('mgr',2)">2</button><button class="npl" onclick="pinKey('mgr',3)">3</button>
+        <button class="npl" onclick="pinKey('mgr',4)">4</button><button class="npl" onclick="pinKey('mgr',5)">5</button><button class="npl" onclick="pinKey('mgr',6)">6</button>
+        <button class="npl" onclick="pinKey('mgr',7)">7</button><button class="npl" onclick="pinKey('mgr',8)">8</button><button class="npl" onclick="pinKey('mgr',9)">9</button>
+        <button class="npl npl-c" onclick="pinClear('mgr')">C</button><button class="npl" onclick="pinKey('mgr',0)">0</button><button class="npl npl-del" onclick="pinDel('mgr')">⌫</button>
+      </div>
+      <button class="btn-confirm" onclick="confirmMgr()">✓ เข้าสู่ระบบ</button>
+    </div>
+
+    <!-- Staff select -->
+    <div id="step-staff-select" class="login-card" style="display:none">
+      <button class="back-btn" onclick="backToRole()">← กลับ</button>
+      <div class="lc-title">🧑‍💼 เลือกพนักงาน</div>
+      <div id="staffPickList" class="staff-pick-list"></div>
+    </div>
+
+    <!-- Staff PIN -->
+    <div id="step-staff-pin" class="login-card" style="display:none">
+      <button class="back-btn" onclick="backToStaffSelect()">← กลับ</button>
+      <div class="lc-title" id="staffPinTitle">พนักงาน</div>
+      <div class="lc-sub">กรอกรหัส PIN</div>
+      <div id="staffPinDots" class="pin-dots"></div>
+      <div class="numpad-login">
+        <button class="npl" onclick="pinKey('staff',1)">1</button><button class="npl" onclick="pinKey('staff',2)">2</button><button class="npl" onclick="pinKey('staff',3)">3</button>
+        <button class="npl" onclick="pinKey('staff',4)">4</button><button class="npl" onclick="pinKey('staff',5)">5</button><button class="npl" onclick="pinKey('staff',6)">6</button>
+        <button class="npl" onclick="pinKey('staff',7)">7</button><button class="npl" onclick="pinKey('staff',8)">8</button><button class="npl" onclick="pinKey('staff',9)">9</button>
+        <button class="npl npl-c" onclick="pinClear('staff')">C</button><button class="npl" onclick="pinKey('staff',0)">0</button><button class="npl npl-del" onclick="pinDel('staff')">⌫</button>
+      </div>
+      <button class="btn-confirm" onclick="confirmStaff()">✓ ยืนยัน</button>
+    </div>
+
+    <!-- Count float -->
+    <div id="step-count-float" class="login-card" style="display:none">
+      <div class="lc-title">💰 นับเงินในเครื่อง</div>
+      <div class="lc-sub">ผจก. ตั้งไว้ <strong id="floatSetDisplay" style="color:var(--accent)">฿0</strong></div>
+      <div class="float-input-area">
+        <label class="input-label">พิมพ์จำนวนเงินที่นับได้ (฿)</label>
+        <input class="input input-big" type="number" id="floatCountInput" placeholder="0" min="0" oninput="updateFloatDiff()">
+      </div>
+      <div id="floatDiffMsg" class="float-diff"></div>
+      <button class="btn-confirm" onclick="confirmFloat()">✓ ยืนยันและเปิดร้าน</button>
+    </div>
+
   </div>
 </div>
 
-<!-- ==================== SCREEN: MAIN APP ==================== -->
-<div class="screen" id="screen-app">
+<!-- ══════════════════════════════════════════
+     SCREEN: APP
+══════════════════════════════════════════ -->
+<div id="screen-app" class="screen">
 
   <!-- TOP BAR -->
   <div class="topbar">
     <div class="topbar-left">
       <div class="topbar-logo">POS<span>Pro</span></div>
-      <div class="topbar-staff" id="topbarStaff">—</div>
+      <div id="topbarUser" class="topbar-user">—</div>
     </div>
-    <div class="topbar-center" id="topbarTime">00:00</div>
+    <div id="topbarClock" class="topbar-clock">00:00</div>
     <div class="topbar-right">
-      <div class="status-badge badge-online" id="statusBadge"><div class="status-dot"></div>ออนไลน์</div>
-      <button class="topbar-btn" onclick="lockScreen()" title="ล็อกหน้าจอ">🔒</button>
+      <div id="statusBadge" class="status-badge badge-online"><div class="status-dot"></div>ออนไลน์</div>
+      <button class="topbar-icon-btn" onclick="openSettings()" title="ตั้งค่า">⚙️</button>
+      <button class="topbar-icon-btn" onclick="confirmCloseShop()" title="ปิดร้าน">🌙</button>
     </div>
   </div>
 
-  <!-- MAIN SPLIT LAYOUT -->
-  <div class="pos-layout">
+  <!-- POS SPLIT LAYOUT -->
+  <div class="pos-wrap">
 
-    <!-- LEFT PANEL: Products -->
+    <!-- LEFT: Products -->
     <div class="pos-left">
-      <!-- Category tabs -->
       <div class="cat-bar" id="catBar">
         <button class="cat-tab active" onclick="filterCat('all',this)">ทั้งหมด</button>
         <button class="cat-tab" onclick="filterCat('drink',this)">🥤 เครื่องดื่ม</button>
@@ -144,230 +131,194 @@
         <button class="cat-tab" onclick="filterCat('snack',this)">🍫 ขนม</button>
         <button class="cat-tab" onclick="filterCat('other',this)">📦 อื่นๆ</button>
       </div>
-      <!-- Search -->
       <div class="search-bar">
-        <input class="search-input" id="searchInput" placeholder="🔍 ค้นหาสินค้า..." oninput="renderProducts()">
+        <input id="searchInput" class="search-input" placeholder="🔍 ค้นหาสินค้า..." oninput="renderProducts()">
       </div>
-      <!-- Product grid -->
-      <div class="product-grid" id="productGrid"></div>
+      <div id="productGrid" class="product-grid"></div>
     </div>
 
-    <!-- RIGHT PANEL: Cart + Actions -->
+    <!-- RIGHT: Cart -->
     <div class="pos-right">
-      <!-- Session info -->
-      <div class="session-bar">
-        <div class="session-info">
-          <span class="session-float">💵 เงินทอน: <strong id="sessionFloat">฿0</strong></span>
-          <span class="session-sales" id="sessionSalesCount">0 รายการ</span>
-        </div>
-        <div id="syncBarRight"><span class="badge badge-green">✓ Sync</span></div>
+      <div class="cart-header-bar">
+        <span>🛒 รายการ</span>
+        <div id="syncChip" class="sync-chip">✓ Sync</div>
       </div>
-
-      <!-- Cart list -->
-      <div class="cart-list" id="cartList">
-        <div class="cart-empty-state">
-          <div style="font-size:40px;margin-bottom:8px">🛒</div>
-          <div>กดสินค้าเพื่อเพิ่มรายการ</div>
-        </div>
+      <div id="cartList" class="cart-list">
+        <div class="cart-empty"><div style="font-size:36px">🛒</div><div>ยังไม่มีสินค้า</div></div>
       </div>
-
-      <!-- Totals -->
       <div class="cart-totals">
-        <div class="total-row-sm"><span>ยอดรวม</span><span id="subtotalDisp">฿0.00</span></div>
-        <div class="total-row-sm"><span>ส่วนลด</span><span id="discountDisp" style="color:var(--accent2)">-฿0.00</span></div>
-        <div class="total-grand"><span>ยอดสุทธิ</span><span id="totalDisp">฿0.00</span></div>
+        <div class="tot-row"><span>ยอดรวม</span><span id="subtotalDisp">฿0.00</span></div>
+        <div class="tot-row"><span>ส่วนลด</span><span id="discountDisp" style="color:var(--accent2)">-฿0.00</span></div>
+        <div class="tot-grand"><span>ยอดสุทธิ</span><span id="totalDisp">฿0.00</span></div>
       </div>
-
-      <!-- Action buttons -->
-      <div class="cart-actions">
-        <button class="cart-act-btn act-void" onclick="clearCart()">🗑️ ล้าง</button>
-        <button class="cart-act-btn act-disc" onclick="openDiscount()">🏷️ ลด</button>
-        <button class="cart-act-btn act-checkout" onclick="openCheckout()">💳 ชำระเงิน</button>
+      <div class="cart-btns">
+        <button class="cbtn cbtn-void" onclick="clearCart()">🗑️ ล้าง</button>
+        <button class="cbtn cbtn-disc" onclick="openDiscount()">🏷️ ลด</button>
+        <button class="cbtn cbtn-pay" onclick="openCheckout()">💳 ชำระเงิน</button>
       </div>
     </div>
   </div>
 
-  <!-- BOTTOM NAV (Manager only tabs) -->
-  <nav class="nav" id="bottomNav">
-    <button class="nav-btn active" onclick="gotoPage('sell',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-      ขาย
+  <!-- BOTTOM NAV -->
+  <nav class="nav">
+    <button class="nav-btn active" id="nav-sell" onclick="showTab('sell',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>ขาย
     </button>
-    <button class="nav-btn mgr-only" onclick="gotoPage('stock',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>
-      สต็อก
+    <button class="nav-btn mgr-tab" id="nav-stock" onclick="showTab('stock',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8m-4-4v4"/></svg>สต็อก
     </button>
-    <button class="nav-btn" onclick="gotoPage('history',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-      ประวัติ
-    </button>
-    <button class="nav-btn mgr-only" onclick="gotoPage('settings',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      ตั้งค่า
+    <button class="nav-btn" id="nav-history" onclick="showTab('history',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>ประวัติ
     </button>
   </nav>
 
-  <!-- ==================== PAGES (overlays on sell) ==================== -->
+  <!-- ── TAB PAGES (full overlay) ── -->
 
-  <!-- PAGE: STOCK (manager only) -->
-  <div class="sub-page" id="page-stock" style="display:none">
-    <div class="sub-page-header">
-      <button class="sub-back-btn" onclick="closePage('stock')">← กลับ</button>
-      <div class="sub-page-title">📦 จัดการสต็อก</div>
+  <!-- STOCK -->
+  <div id="tab-stock" class="tab-page" style="display:none">
+    <div class="tab-topbar">
+      <button class="tab-back" onclick="closeTab('stock')">←</button>
+      <div class="tab-title">📦 จัดการสต็อก</div>
     </div>
-    <div class="tab-bar">
-      <div class="tab active" onclick="switchStockTab('view',this)">ดูสต็อก</div>
-      <div class="tab" onclick="switchStockTab('receive',this)">📥 รับของ</div>
-      <div class="tab" onclick="switchStockTab('count',this)">🔢 นับของ</div>
-      <div class="tab" onclick="switchStockTab('add',this)">➕ เพิ่มสินค้า</div>
+    <div class="sub-tabs">
+      <button class="stab active" onclick="stockTab('view',this)">ดูสต็อก</button>
+      <button class="stab" onclick="stockTab('receive',this)">📥 รับของ</button>
+      <button class="stab" onclick="stockTab('count',this)">🔢 นับของ</button>
+      <button class="stab" onclick="stockTab('add',this)">➕ เพิ่ม</button>
     </div>
-    <div id="stockView"><div id="stockList"></div></div>
-    <div id="stockReceive" style="display:none">
-      <p class="section-sub">กรอกจำนวนที่รับเข้า</p>
-      <div id="receiveList"></div>
-      <button class="btn btn-primary mt-12" onclick="confirmReceive()">✅ ยืนยันรับของ</button>
-    </div>
-    <div id="stockCount" style="display:none">
-      <p class="section-sub">นับของจริง กรอกจำนวนที่นับได้</p>
-      <div id="countList"></div>
-      <button class="btn btn-primary mt-12" onclick="confirmCount()">✅ อัปเดตจากการนับ</button>
-    </div>
-    <div id="stockAdd" style="display:none">
-      <div class="card" style="margin-top:12px">
-        <div class="input-group"><label class="input-label">ชื่อสินค้า *</label><input class="input" id="newProdName" placeholder="เช่น น้ำดื่ม 600ml"></div>
-        <div class="btn-group">
-          <div class="input-group" style="margin:0"><label class="input-label">ราคาขาย (฿) *</label><input class="input" type="number" id="newProdPrice" placeholder="0"></div>
-          <div class="input-group" style="margin:0"><label class="input-label">ต้นทุน (฿)</label><input class="input" type="number" id="newProdCost" placeholder="0"></div>
-        </div>
-        <div class="btn-group mt-8">
-          <div class="input-group" style="margin:0"><label class="input-label">จำนวนสต็อก</label><input class="input" type="number" id="newProdStock" placeholder="0"></div>
-          <div class="input-group" style="margin:0"><label class="input-label">จุดเตือน</label><input class="input" type="number" id="newProdMin" placeholder="5"></div>
-        </div>
-        <div class="btn-group mt-8">
-          <div class="input-group" style="margin:0"><label class="input-label">หมวดหมู่</label>
-            <select class="input" id="newProdCat">
-              <option value="other">📦 อื่นๆ</option><option value="drink">🥤 เครื่องดื่ม</option>
-              <option value="food">🍔 อาหาร</option><option value="snack">🍫 ขนม</option>
-            </select>
+    <div class="tab-body">
+      <div id="sv-view"><div id="stockList"></div></div>
+      <div id="sv-receive" style="display:none">
+        <p class="hint">กรอกจำนวนที่รับเข้า</p>
+        <div id="receiveList"></div>
+        <button class="btn btn-primary mt-12" onclick="confirmReceive()">✅ ยืนยันรับของ</button>
+      </div>
+      <div id="sv-count" style="display:none">
+        <p class="hint">กรอกจำนวนจริงที่นับได้</p>
+        <div id="countList"></div>
+        <button class="btn btn-primary mt-12" onclick="confirmCount()">✅ อัปเดตสต็อก</button>
+      </div>
+      <div id="sv-add" style="display:none">
+        <div class="card">
+          <div class="ig"><label class="il">ชื่อสินค้า *</label><input class="input" id="nProdName" placeholder="เช่น น้ำดื่ม 600ml"></div>
+          <div class="row2">
+            <div class="ig"><label class="il">ราคาขาย *</label><input class="input" type="number" id="nProdPrice" placeholder="0"></div>
+            <div class="ig"><label class="il">ต้นทุน</label><input class="input" type="number" id="nProdCost" placeholder="0"></div>
           </div>
-          <div class="input-group" style="margin:0"><label class="input-label">อีโมจิ</label><input class="input" id="newProdEmoji" placeholder="📦" maxlength="4"></div>
+          <div class="row2">
+            <div class="ig"><label class="il">สต็อก</label><input class="input" type="number" id="nProdStock" placeholder="0"></div>
+            <div class="ig"><label class="il">จุดเตือน</label><input class="input" type="number" id="nProdMin" placeholder="5"></div>
+          </div>
+          <div class="row2">
+            <div class="ig"><label class="il">หมวดหมู่</label>
+              <select class="input" id="nProdCat"><option value="other">📦 อื่นๆ</option><option value="drink">🥤 เครื่องดื่ม</option><option value="food">🍔 อาหาร</option><option value="snack">🍫 ขนม</option></select>
+            </div>
+            <div class="ig"><label class="il">อีโมจิ</label><input class="input" id="nProdEmoji" placeholder="📦" maxlength="4"></div>
+          </div>
+          <button class="btn btn-primary mt-8" onclick="saveNewProduct()">💾 บันทึกสินค้า</button>
         </div>
-        <button class="btn btn-primary mt-8" onclick="saveProduct()">💾 บันทึกสินค้า</button>
       </div>
     </div>
   </div>
 
-  <!-- PAGE: HISTORY -->
-  <div class="sub-page" id="page-history" style="display:none">
-    <div class="sub-page-header">
-      <button class="sub-back-btn" onclick="closePage('history')">← กลับ</button>
-      <div class="sub-page-title">🧾 ประวัติการขาย</div>
+  <!-- HISTORY -->
+  <div id="tab-history" class="tab-page" style="display:none">
+    <div class="tab-topbar">
+      <button class="tab-back" onclick="closeTab('history')">←</button>
+      <div class="tab-title">🧾 ประวัติการขาย</div>
+      <button class="tab-action-btn" onclick="manualSync()">🔄 Sync</button>
     </div>
-    <div class="stat-grid">
-      <div class="stat-box"><div class="stat-label">ยอดวันนี้</div><div class="stat-value green" id="todaySales">฿0</div></div>
-      <div class="stat-box"><div class="stat-label">จำนวนบิล</div><div class="stat-value blue" id="todayBills">0</div></div>
-      <div class="stat-box"><div class="stat-label">เฉลี่ย/บิล</div><div class="stat-value yellow" id="avgBill">฿0</div></div>
-      <div class="stat-box"><div class="stat-label">รอ Sync</div><div class="stat-value orange" id="pendingSync">0</div></div>
+    <div class="tab-body">
+      <div class="stat-grid">
+        <div class="stat-box"><div class="sl">ยอดวันนี้</div><div id="todaySales" class="sv green">฿0</div></div>
+        <div class="stat-box"><div class="sl">จำนวนบิล</div><div id="todayBills" class="sv blue">0</div></div>
+        <div class="stat-box"><div class="sl">เฉลี่ย/บิล</div><div id="avgBill" class="sv yellow">฿0</div></div>
+        <div class="stat-box"><div class="sl">รอ Sync</div><div id="pendingSync" class="sv orange">0</div></div>
+      </div>
+      <div id="saleHistory"></div>
     </div>
-    <div class="flex-between mb-8">
-      <span style="font-weight:600">รายการล่าสุด</span>
-      <button class="btn btn-secondary btn-sm" onclick="manualSync()">🔄 Sync</button>
-    </div>
-    <div id="saleHistory"></div>
   </div>
 
-  <!-- PAGE: SETTINGS (manager only) -->
-  <div class="sub-page" id="page-settings" style="display:none">
-    <div class="sub-page-header">
-      <button class="sub-back-btn" onclick="closePage('settings')">← กลับ</button>
-      <div class="sub-page-title">⚙️ ตั้งค่าระบบ</div>
+  <!-- SETTINGS (manager only, modal-style) -->
+  <div id="tab-settings" class="tab-page" style="display:none">
+    <div class="tab-topbar">
+      <button class="tab-back" onclick="closeTab('settings')">←</button>
+      <div class="tab-title">⚙️ ตั้งค่า</div>
     </div>
-    <div class="settings-tabs">
-      <button class="stab active" onclick="switchSettingsTab('shop',this)">ร้านค้า</button>
-      <button class="stab" onclick="switchSettingsTab('staff',this)">พนักงาน</button>
-      <button class="stab" onclick="switchSettingsTab('sync',this)">Sync</button>
+    <div class="sub-tabs">
+      <button class="stab active" onclick="settingsTab('shop',this)">ร้านค้า</button>
+      <button class="stab" onclick="settingsTab('staff',this)">พนักงาน</button>
+      <button class="stab" onclick="settingsTab('sync',this)">Sync</button>
     </div>
-
-    <!-- Shop tab -->
-    <div id="stab-shop">
-      <div class="card">
-        <div class="card-title">ข้อมูลร้านค้า</div>
-        <div class="input-group"><label class="input-label">ชื่อร้าน</label><input class="input" id="shopName" placeholder="ร้านสะดวกซื้อ..."></div>
-        <div class="input-group"><label class="input-label">เบอร์โทร</label><input class="input" id="shopPhone" type="tel"></div>
-        <div class="input-group"><label class="input-label">ที่อยู่</label><input class="input" id="shopAddr"></div>
+    <div class="tab-body">
+      <!-- Shop -->
+      <div id="st-shop">
+        <div class="card">
+          <div class="card-title">ข้อมูลร้านค้า</div>
+          <div class="ig"><label class="il">ชื่อร้าน</label><input class="input" id="shopName" placeholder="ร้านสะดวกซื้อ..."></div>
+          <div class="ig"><label class="il">เบอร์โทร</label><input class="input" id="shopPhone" type="tel"></div>
+          <div class="ig"><label class="il">ที่อยู่</label><input class="input" id="shopAddr"></div>
+        </div>
+        <button class="btn btn-primary" onclick="saveShopSettings()">💾 บันทึก</button>
+        <div class="danger-zone">
+          <button class="btn btn-danger mt-8" onclick="clearAllData()">🗑️ ล้างข้อมูลทั้งหมด</button>
+        </div>
       </div>
-      <button class="btn btn-primary" onclick="saveSettings()">💾 บันทึก</button>
-    </div>
-
-    <!-- Staff tab -->
-    <div id="stab-staff" style="display:none">
-      <div class="card">
-        <div class="card-title">รหัสผู้จัดการ</div>
-        <div class="input-group"><label class="input-label">รหัส PIN ผจก (4-8 หลัก)</label><input class="input" type="password" id="mgrPinInput" placeholder="••••••"></div>
-        <button class="btn btn-secondary btn-sm" onclick="saveMgrPin()">บันทึกรหัส ผจก</button>
+      <!-- Staff -->
+      <div id="st-staff" style="display:none">
+        <div class="card">
+          <div class="card-title">รหัส PIN ผู้จัดการ</div>
+          <div class="ig"><label class="il">PIN ใหม่ (4-8 หลัก)</label><input class="input" type="password" id="newMgrPin" placeholder="••••••"></div>
+          <button class="btn btn-secondary btn-sm" onclick="saveMgrPin()">บันทึกรหัส</button>
+        </div>
+        <div class="card">
+          <div class="card-title">รายชื่อพนักงาน</div>
+          <div id="staffAdminList"></div>
+          <button class="btn btn-primary mt-8" onclick="openAddStaffModal()">+ เพิ่มพนักงาน</button>
+        </div>
       </div>
-      <div class="card">
-        <div class="card-title">รายชื่อพนักงาน</div>
-        <div id="staffListAdmin"></div>
-        <button class="btn btn-primary mt-8" onclick="openAddStaff()">+ เพิ่มพนักงาน</button>
-      </div>
-    </div>
-
-    <!-- Sync tab -->
-    <div id="stab-sync" style="display:none">
-      <div class="card">
-        <div class="card-title">🔗 Google Sheets</div>
-        <div class="input-group"><label class="input-label">Apps Script URL</label><input class="input" id="sheetsUrl" placeholder="https://script.google.com/macros/s/..."></div>
-        <div class="text-sm mb-8">วาง URL จาก Google Apps Script</div>
-      </div>
-      <button class="btn btn-primary mb-8" onclick="saveSettings()">💾 บันทึก</button>
-      <div class="card">
-        <div class="card-title">สถานะ</div>
-        <div class="setting-row"><span>รอ Sync</span><span id="queueCount">0</span></div>
-        <div class="setting-row"><span>Sync ล่าสุด</span><span id="lastSyncDisplay">ยังไม่เคย</span></div>
-        <div class="setting-row"><span>เวอร์ชัน</span><span>v2.0.0</span></div>
-      </div>
-      <div class="btn-group mt-8">
+      <!-- Sync -->
+      <div id="st-sync" style="display:none">
+        <div class="card">
+          <div class="card-title">🔗 Google Sheets</div>
+          <div class="ig"><label class="il">Apps Script URL</label><input class="input" id="sheetsUrl" placeholder="https://script.google.com/macros/s/..."></div>
+          <div class="hint" style="margin-bottom:8px">วาง URL จาก Google Apps Script</div>
+          <button class="btn btn-primary btn-sm" onclick="saveSyncSettings()">💾 บันทึก URL</button>
+        </div>
+        <div class="card">
+          <div class="card-title">สถานะ</div>
+          <div class="sr"><span>รอ Sync</span><span id="queueCountDisp">0</span></div>
+          <div class="sr"><span>Sync ล่าสุด</span><span id="lastSyncDisp">ยังไม่เคย</span></div>
+          <div class="sr"><span>เวอร์ชัน</span><span>v3.0.0</span></div>
+        </div>
         <button class="btn btn-secondary" onclick="manualSync()">🔄 Sync ตอนนี้</button>
-        <button class="btn btn-danger" onclick="clearAllData()">🗑️ ล้างข้อมูล</button>
       </div>
     </div>
   </div>
 
 </div><!-- /screen-app -->
 
-<!-- ==================== MODALS ==================== -->
+<!-- ══════════════════ MODALS ══════════════════ -->
 
 <!-- CHECKOUT -->
-<div class="modal-overlay" id="checkoutModal">
+<div id="checkoutModal" class="modal-overlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">💳 ชำระเงิน</div>
-    <div class="flex-between" style="margin-bottom:12px">
-      <span style="color:var(--text2)">ยอดที่ต้องชำระ</span>
-      <span id="checkoutTotal" style="font-size:28px;font-weight:800;color:var(--accent);font-family:'IBM Plex Mono',monospace">฿0.00</span>
+    <div class="mhandle"></div>
+    <div class="mtitle">💳 ชำระเงิน</div>
+    <div class="checkout-total-row">
+      <span class="checkout-label">ยอดที่ต้องชำระ</span>
+      <span id="checkoutTotal" class="checkout-total">฿0.00</span>
     </div>
-    <div class="input-label">รับเงินมา (฿)</div>
-    <div id="receivedDisplay" style="font-size:28px;font-weight:700;font-family:'IBM Plex Mono',monospace;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--accent3);margin-bottom:4px">0</div>
-    <div class="quick-amounts" id="quickAmounts"></div>
+    <div class="il" style="margin-bottom:4px">รับเงินมา (฿)</div>
+    <div id="receivedDisplay" class="received-display">0</div>
+    <div id="quickAmounts" class="quick-amounts"></div>
     <div class="numpad">
-      <button class="numpad-btn" onclick="numInput('1')">1</button>
-      <button class="numpad-btn" onclick="numInput('2')">2</button>
-      <button class="numpad-btn" onclick="numInput('3')">3</button>
-      <button class="numpad-btn" onclick="numInput('4')">4</button>
-      <button class="numpad-btn" onclick="numInput('5')">5</button>
-      <button class="numpad-btn" onclick="numInput('6')">6</button>
-      <button class="numpad-btn" onclick="numInput('7')">7</button>
-      <button class="numpad-btn" onclick="numInput('8')">8</button>
-      <button class="numpad-btn" onclick="numInput('9')">9</button>
-      <button class="numpad-btn" onclick="numInput('00')">00</button>
-      <button class="numpad-btn" onclick="numInput('0')">0</button>
-      <button class="numpad-btn" onclick="numDelete()">⌫</button>
+      <button class="np" onclick="numInput('1')">1</button><button class="np" onclick="numInput('2')">2</button><button class="np" onclick="numInput('3')">3</button>
+      <button class="np" onclick="numInput('4')">4</button><button class="np" onclick="numInput('5')">5</button><button class="np" onclick="numInput('6')">6</button>
+      <button class="np" onclick="numInput('7')">7</button><button class="np" onclick="numInput('8')">8</button><button class="np" onclick="numInput('9')">9</button>
+      <button class="np" onclick="numInput('00')">00</button><button class="np" onclick="numInput('0')">0</button><button class="np" onclick="numDel()">⌫</button>
     </div>
-    <div style="margin-top:10px;padding:12px;background:var(--surface2);border-radius:10px;" class="flex-between">
-      <span style="color:var(--text2)">เงินทอน</span>
-      <span id="changeDisp" style="font-size:24px;font-weight:700;color:var(--warn);font-family:'IBM Plex Mono',monospace">฿0.00</span>
-    </div>
+    <div class="change-row"><span>เงินทอน</span><span id="changeDisp" class="change-amt">฿0.00</span></div>
     <div class="btn-group mt-8">
       <button class="btn btn-secondary" onclick="closeModal('checkoutModal')">ยกเลิก</button>
       <button class="btn btn-primary" onclick="completeSale()">✅ ยืนยัน</button>
@@ -376,35 +327,35 @@
 </div>
 
 <!-- DISCOUNT -->
-<div class="modal-overlay" id="discountModal">
+<div id="discountModal" class="modal-overlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">🏷️ ส่วนลด</div>
-    <div class="input-group"><label class="input-label">ส่วนลด (%)</label><input class="input" type="number" id="discountPct" placeholder="0" min="0" max="100" oninput="updateDiscount()"></div>
-    <div class="input-group"><label class="input-label">ส่วนลดเป็นบาท (฿)</label><input class="input" type="number" id="discountBaht" placeholder="0" min="0" oninput="updateDiscount()"></div>
+    <div class="mhandle"></div>
+    <div class="mtitle">🏷️ ส่วนลด</div>
+    <div class="ig"><label class="il">ส่วนลด (%)</label><input class="input" type="number" id="discountPct" placeholder="0" min="0" max="100" oninput="updateDiscount()"></div>
+    <div class="ig"><label class="il">ส่วนลดเป็นบาท (฿)</label><input class="input" type="number" id="discountBaht" placeholder="0" min="0" oninput="updateDiscount()"></div>
     <button class="btn btn-primary" onclick="closeModal('discountModal')">✅ ยืนยัน</button>
   </div>
 </div>
 
 <!-- EDIT PRODUCT -->
-<div class="modal-overlay" id="editProductModal">
+<div id="editProductModal" class="modal-overlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">✏️ แก้ไขสินค้า</div>
-    <div class="input-group"><label class="input-label">ชื่อสินค้า *</label><input class="input" id="editProdName"></div>
-    <div class="btn-group">
-      <div class="input-group" style="margin:0"><label class="input-label">ราคาขาย (฿)</label><input class="input" type="number" id="editProdPrice"></div>
-      <div class="input-group" style="margin:0"><label class="input-label">ต้นทุน (฿)</label><input class="input" type="number" id="editProdCost"></div>
+    <div class="mhandle"></div>
+    <div class="mtitle">✏️ แก้ไขสินค้า</div>
+    <div class="ig"><label class="il">ชื่อสินค้า</label><input class="input" id="eProdName"></div>
+    <div class="row2">
+      <div class="ig"><label class="il">ราคาขาย</label><input class="input" type="number" id="eProdPrice"></div>
+      <div class="ig"><label class="il">ต้นทุน</label><input class="input" type="number" id="eProdCost"></div>
     </div>
-    <div class="btn-group mt-8">
-      <div class="input-group" style="margin:0"><label class="input-label">สต็อก</label><input class="input" type="number" id="editProdStock"></div>
-      <div class="input-group" style="margin:0"><label class="input-label">จุดเตือน</label><input class="input" type="number" id="editProdMin"></div>
+    <div class="row2">
+      <div class="ig"><label class="il">สต็อก</label><input class="input" type="number" id="eProdStock"></div>
+      <div class="ig"><label class="il">จุดเตือน</label><input class="input" type="number" id="eProdMin"></div>
     </div>
-    <div class="btn-group mt-8">
-      <div class="input-group" style="margin:0"><label class="input-label">หมวด</label>
-        <select class="input" id="editProdCat"><option value="other">📦 อื่นๆ</option><option value="drink">🥤 เครื่องดื่ม</option><option value="food">🍔 อาหาร</option><option value="snack">🍫 ขนม</option></select>
+    <div class="row2">
+      <div class="ig"><label class="il">หมวด</label>
+        <select class="input" id="eProdCat"><option value="other">📦 อื่นๆ</option><option value="drink">🥤 เครื่องดื่ม</option><option value="food">🍔 อาหาร</option><option value="snack">🍫 ขนม</option></select>
       </div>
-      <div class="input-group" style="margin:0"><label class="input-label">อีโมจิ</label><input class="input" id="editProdEmoji" maxlength="4"></div>
+      <div class="ig"><label class="il">อีโมจิ</label><input class="input" id="eProdEmoji" maxlength="4"></div>
     </div>
     <div class="btn-group mt-8">
       <button class="btn btn-secondary" onclick="closeModal('editProductModal')">ยกเลิก</button>
@@ -414,17 +365,14 @@
 </div>
 
 <!-- ADD STAFF -->
-<div class="modal-overlay" id="addStaffModal">
+<div id="addStaffModal" class="modal-overlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">👤 เพิ่มพนักงาน</div>
-    <div class="input-group"><label class="input-label">ชื่อพนักงาน *</label><input class="input" id="newStaffName" placeholder="เช่น สมชาย ใจดี"></div>
-    <div class="input-group"><label class="input-label">รหัส PIN (4-8 หลัก) *</label><input class="input" type="password" id="newStaffPin" placeholder="••••"></div>
-    <div class="input-group"><label class="input-label">ตำแหน่ง</label>
-      <select class="input" id="newStaffRole">
-        <option value="staff">พนักงานขาย</option>
-        <option value="senior">พนักงานอาวุโส</option>
-      </select>
+    <div class="mhandle"></div>
+    <div class="mtitle">👤 เพิ่มพนักงาน</div>
+    <div class="ig"><label class="il">ชื่อพนักงาน *</label><input class="input" id="newStaffName" placeholder="เช่น สมชาย ใจดี"></div>
+    <div class="ig"><label class="il">รหัส PIN (4-8 หลัก) *</label><input class="input" type="password" id="newStaffPin" placeholder="••••"></div>
+    <div class="ig"><label class="il">ตำแหน่ง</label>
+      <select class="input" id="newStaffRole"><option value="staff">👤 พนักงานขาย</option><option value="senior">⭐ พนักงานอาวุโส</option></select>
     </div>
     <div class="btn-group mt-8">
       <button class="btn btn-secondary" onclick="closeModal('addStaffModal')">ยกเลิก</button>
@@ -434,10 +382,10 @@
 </div>
 
 <!-- RECEIPT -->
-<div class="modal-overlay" id="receiptModal">
+<div id="receiptModal" class="modal-overlay">
   <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">🧾 ใบเสร็จ</div>
+    <div class="mhandle"></div>
+    <div class="mtitle">🧾 ใบเสร็จ</div>
     <div id="receiptContent"></div>
     <button class="btn btn-primary mt-8" onclick="closeModal('receiptModal')">✅ เสร็จสิ้น</button>
   </div>
