@@ -482,7 +482,7 @@ body {
 .tab-body { flex: 1; overflow-y: auto; padding: var(--pad); }
 
 /* ══════════════════════════════════════════
-   STOCK
+      STOCK
 ══════════════════════════════════════════ */
 .stock-item {
   display: flex; align-items: center; gap: clamp(10px,1.5vw,18px);
@@ -490,4 +490,184 @@ body {
 }
 .stock-emoji { font-size: clamp(26px,4vw,38px); flex-shrink: 0; }
 .stock-info  { flex: 1; min-width: 0; }
-.stock-name  { fo
+.stock-name  { font-weight: 700; font-size: var(--fs-base); }
+.stock-meta  { font-size: var(--fs-xs); color: var(--t2); margin: 3px 0; }
+.stock-bar   { height: 5px; background: var(--bd); border-radius: 3px; margin-top: 6px; }
+.stock-bar-fill { height: 100%; border-radius: 3px; }
+.stock-right { text-align: right; flex-shrink: 0; }
+.stock-qty   { font-size: clamp(22px,3.5vw,32px); font-weight: 800; font-family: 'IBM Plex Mono', monospace; }
+.recv-item   {
+  display: flex; align-items: center; gap: clamp(10px,1.5vw,16px);
+  padding: clamp(10px,1.5vh,16px) 0; border-bottom: 1px solid var(--bd);
+}
+.recv-emoji { font-size: clamp(22px,3.5vw,32px); flex-shrink: 0; }
+.recv-info  { flex: 1; }
+.recv-name  { font-weight: 700; font-size: var(--fs-base); }
+.recv-cur   { font-size: var(--fs-xs); color: var(--t2); }
+.recv-input {
+  width: clamp(72px,10vw,100px); padding: clamp(8px,1.2vh,12px);
+  text-align: center; background: var(--s2); border: 1px solid var(--bd);
+  border-radius: var(--r2); color: var(--t1);
+  font-size: var(--fs-base); font-family: 'IBM Plex Mono', monospace;
+}
+
+/* ══════════════════════════════════════════
+   HISTORY
+══════════════════════════════════════════ */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap); margin-bottom: var(--gap); }
+.stat-box  { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r); padding: clamp(12px,2vh,20px); }
+.sl { font-size: var(--fs-xs); color: var(--t2); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+.sv { font-size: clamp(22px,3.5vw,34px); font-weight: 800; font-family: 'IBM Plex Mono', monospace; }
+.sv.green{color:var(--ac)} .sv.blue{color:var(--ac3)} .sv.yellow{color:var(--warn)} .sv.orange{color:var(--ac2)}
+.sale-rec { display: flex; align-items: center; gap: clamp(10px,1.5vw,16px); padding: clamp(12px,1.8vh,18px) 0; border-bottom: 1px solid var(--bd); }
+.sale-icon { font-size: clamp(20px,3vw,28px); }
+.sale-info { flex: 1; }
+.sale-id   { font-size: var(--fs-base); font-weight: 700; }
+.sale-meta { font-size: var(--fs-xs); color: var(--t2); }
+.sale-amt  { font-size: clamp(16px,2.5vw,24px); font-weight: 800; color: var(--ac); font-family: 'IBM Plex Mono', monospace; }
+
+/* ══════════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════════ */
+.sr { display: flex; justify-content: space-between; padding: clamp(10px,1.5vh,16px) 0; border-bottom: 1px solid var(--bd); font-size: var(--fs-base); }
+.sr span:first-child { color: var(--t2); }
+.staff-admin-item { display: flex; align-items: center; gap: clamp(10px,1.5vw,16px); padding: clamp(10px,1.5vh,16px) 0; border-bottom: 1px solid var(--bd); }
+.sai-avatar { width: clamp(36px,5vw,48px); height: clamp(36px,5vw,48px); border-radius: 50%; background: var(--s3); display: flex; align-items: center; justify-content: center; font-size: var(--fs-base); font-weight: 700; color: var(--ac); flex-shrink: 0; }
+.sai-info { flex: 1; }
+.sai-name { font-weight: 700; font-size: var(--fs-base); }
+.sai-role { font-size: var(--fs-xs); color: var(--t2); }
+.danger-zone { border-top: 1px solid rgba(255,71,87,.2); margin-top: 18px; padding-top: 14px; }
+
+/* ══════════════════════════════════════════
+   CARDS / INPUTS / BUTTONS
+══════════════════════════════════════════ */
+.card { background: var(--s1); border: 1px solid var(--bd); border-radius: var(--r); padding: clamp(14px,2.5vh,24px); margin-bottom: clamp(10px,1.5vh,16px); }
+.card-title { font-size: var(--fs-xs); color: var(--t2); margin-bottom: clamp(10px,1.5vh,16px); text-transform: uppercase; letter-spacing: .8px; font-weight: 700; }
+.ig { margin-bottom: clamp(10px,1.5vh,16px); }
+.il { font-size: var(--fs-xs); color: var(--t2); display: block; margin-bottom: 5px; }
+.input {
+  width: 100%; padding: clamp(10px,1.5vh,16px) clamp(12px,2vw,18px);
+  background: var(--s2); border: 1px solid var(--bd);
+  border-radius: var(--r2); color: var(--t1);
+  font-size: var(--fs-base); font-family: 'Sarabun', sans-serif; outline: none;
+  transition: border-color .2s;
+}
+.input:focus { border-color: var(--ac); }
+.row2 { display: flex; gap: var(--gap); }
+.row2 .ig { flex: 1; margin-bottom: clamp(10px,1.5vh,16px); }
+.hint { font-size: var(--fs-xs); color: var(--t2); margin-bottom: clamp(8px,1.2vh,14px); }
+
+.btn {
+  padding: clamp(11px,1.8vh,18px) clamp(16px,2.5vw,26px);
+  border-radius: var(--r2); border: none;
+  font-size: var(--fs-base); font-weight: 700;
+  cursor: pointer; font-family: 'Sarabun', sans-serif; transition: all .15s;
+}
+.btn:active { transform: scale(.96); }
+.btn-primary   { background: var(--ac); color: #000; }
+.btn-secondary { background: var(--s2); border: 1px solid var(--bd); color: var(--t1); }
+.btn-danger    { background: rgba(255,71,87,.2); border: 1px solid var(--danger); color: var(--danger); }
+.btn-sm { padding: clamp(8px,1.2vh,12px) clamp(12px,2vw,18px); font-size: var(--fs-sm); }
+.btn-group { display: flex; gap: var(--gap); }
+.btn-group .btn { flex: 1; }
+.mt-8 { margin-top: 8px; } .mt-12 { margin-top: 12px; } .mb-8 { margin-bottom: 8px; }
+
+/* Badges */
+.badge-green  { background:rgba(0,229,160,.15); color:var(--ac);    border:1px solid rgba(0,229,160,.3);  border-radius:12px; padding:3px 10px; font-size:var(--fs-xs); font-weight:700; }
+.badge-yellow { background:rgba(255,204,0,.15); color:var(--warn);  border:1px solid rgba(255,204,0,.3);  border-radius:12px; padding:3px 10px; font-size:var(--fs-xs); font-weight:700; }
+.badge-red    { background:rgba(255,71,87,.15); color:var(--danger);border:1px solid rgba(255,71,87,.3);  border-radius:12px; padding:3px 10px; font-size:var(--fs-xs); font-weight:700; }
+
+/* ══════════════════════════════════════════
+   CHECKOUT MODAL
+══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.75); backdrop-filter: blur(4px);
+  display: none; align-items: flex-end;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  width: 100%; max-height: 92dvh; overflow-y: auto;
+  background: var(--s1); border-radius: 20px 20px 0 0;
+  padding: clamp(18px,3vh,28px) clamp(18px,3vw,28px) clamp(28px,4vh,44px);
+  border-top: 1px solid var(--bd2);
+}
+.mhandle { width: 48px; height: 5px; border-radius: 3px; background: var(--bd2); margin: 0 auto clamp(14px,2vh,22px); }
+.mtitle  { font-size: var(--fs-xl); font-weight: 800; margin-bottom: clamp(14px,2vh,22px); }
+
+/* Checkout total row */
+.checkout-total-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: clamp(12px,2vh,18px); background: var(--s2); border-radius: var(--r);
+  margin-bottom: clamp(12px,2vh,18px); border: 1px solid var(--bd);
+}
+.checkout-label { color: var(--t2); font-size: var(--fs-base); font-weight: 600; }
+.checkout-total { font-size: clamp(28px,5vw,44px); font-weight: 800; color: var(--ac); font-family: 'IBM Plex Mono', monospace; }
+
+/* Received amount display */
+.received-display {
+  font-size: clamp(28px,5vw,44px); font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  background: var(--s2); border: 2px solid var(--bd);
+  border-radius: var(--r2); padding: clamp(12px,2vh,18px) clamp(14px,2vw,20px);
+  color: var(--ac3); margin-bottom: clamp(10px,1.5vh,16px);
+}
+
+/* Quick amount buttons — ใหญ่ชัดเจน */
+.quick-amounts { display: flex; gap: var(--gap); flex-wrap: wrap; margin-bottom: clamp(10px,1.5vh,16px); }
+.qamt {
+  flex: 1; min-width: clamp(70px,12vw,120px);
+  padding: clamp(12px,2vh,18px) clamp(10px,1.5vw,16px);
+  border-radius: var(--r2); border: 2px solid var(--ac);
+  background: rgba(0,229,160,.15); color: var(--ac);
+  font-size: var(--fs-base); font-weight: 800; cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace; text-align: center;
+  transition: all .15s;
+}
+.qamt:active { background: rgba(0,229,160,.35); transform: scale(.96); }
+
+/* Numpad — ใหญ่ขึ้น */
+.numpad { display: grid; grid-template-columns: repeat(3,1fr); gap: clamp(8px,1.2vw,14px); margin-top: clamp(8px,1.2vh,14px); }
+.np {
+  padding: clamp(16px,3vh,26px) clamp(10px,1.5vw,16px);
+  font-size: clamp(22px,3.5vw,32px); font-weight: 700;
+  background: var(--s2); border: 1px solid var(--bd); border-radius: var(--r);
+  color: var(--t1); cursor: pointer;
+  font-family: 'IBM Plex Mono', monospace; transition: all .15s;
+}
+.np:active { transform: scale(.92); background: var(--s3); }
+
+.change-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: clamp(12px,2vh,18px); background: var(--s2);
+  border-radius: var(--r2); margin-top: clamp(10px,1.5vh,16px);
+  border: 1px solid var(--bd);
+}
+.change-label { font-size: var(--fs-base); color: var(--t2); font-weight: 600; }
+.change-amt   { font-size: clamp(26px,4.5vw,40px); font-weight: 800; color: var(--warn); font-family: 'IBM Plex Mono', monospace; }
+
+/* Receipt */
+.receipt { font-family: 'IBM Plex Mono', monospace; font-size: var(--fs-sm); }
+.rcpt-line   { display: flex; justify-content: space-between; padding: 4px 0; }
+.rcpt-center { text-align: center; }
+.rcpt-big    { font-size: var(--fs-base); font-weight: 700; }
+.rcpt-div    { border-top: 1px dashed var(--bd2); margin: 8px 0; }
+
+/* ══════════════════════════════════════════
+   PORTRAIT MOBILE FALLBACK
+══════════════════════════════════════════ */
+@media (max-width: 600px) and (orientation: portrait) {
+  .pos-wrap { flex-direction: column; }
+  .pos-left {
+    border-right: none; border-bottom: 1px solid var(--bd);
+    flex: 1; min-height: 0;
+  }
+  .pos-right {
+    width: 100%; flex: 0 0 auto;
+    max-height: 45vh;
+  }
+  .product-grid {
+    --card-min: clamp(90px, 28vw, 130px);
+  }
+  .cbtn-pay { font-size: var(--fs-base); padding: clamp(12px,2vh,16px); }
+                                                                        }
