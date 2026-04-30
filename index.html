@@ -1,0 +1,1824 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0f1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ปิดงานแจ้งซ่อม – มณีจันทร์</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ══════════════════════════════════════════
+   ROOT VARIABLES
+══════════════════════════════════════════ */
+:root{
+  --bg:#0f1117;--surface:#1a1d27;--card:#21253a;--border:#2e3350;
+  --accent:#3b7eff;--accent2:#00d4aa;--warn:#ff6b35;--danger:#ff4444;
+  --text:#e8ecf4;--muted:#7a82a0;--success:#22c55e;--r:12px;
+  --shift-morning:#f59e0b;--shift-noon:#3b82f6;--shift-night:#8b5cf6;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Sarabun',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ── Page system ── */
+.page{display:none;min-height:100vh;flex-direction:column;}
+.page.on{display:flex;}
+
+/* ── Topbar ── */
+.topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.topbar-info{flex:1;}
+.topbar-title{font-size:16px;font-weight:700;}
+.topbar-sub{font-size:11px;color:var(--muted);}
+.led{width:12px;height:12px;border-radius:50%;background:var(--muted);flex-shrink:0;}
+.led.syncing{background:var(--danger);animation:blink .7s infinite;}
+.led.ok{background:var(--success);box-shadow:0 0 6px var(--success);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+
+/* ── Sticky header group ── */
+.sticky-head{position:sticky;top:0;z-index:90;background:var(--bg);flex-shrink:0;}
+.search-wrap{padding:10px 16px 6px;}
+.search-box{
+  width:100%;background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:10px 14px;color:var(--text);
+  font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:border .2s;
+}
+.search-box:focus{border-color:var(--accent);}
+.search-box::placeholder{color:var(--muted);}
+.tabs{display:flex;padding:0 16px 8px;gap:6px;flex-wrap:wrap;}
+.tab{
+  padding:5px 14px;border-radius:20px;border:1px solid var(--border);
+  background:transparent;color:var(--muted);font-family:'Sarabun',sans-serif;
+  font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;
+}
+.tab.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.count-bar{padding:0 16px 8px;font-size:12px;color:var(--muted);}
+.count-bar b{color:var(--accent2);}
+
+/* ── Scrollable job list ── */
+.job-scroll{flex:1;overflow-y:auto;padding:0 16px 100px;}
+.job-list{display:flex;flex-direction:column;gap:10px;padding-top:4px;}
+
+/* ── Job Card ── */
+.job-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  overflow:hidden;display:flex;align-items:stretch;cursor:pointer;transition:all .15s;
+}
+.job-card:active{transform:scale(.985);}
+.job-card:hover{border-color:var(--accent);}
+.jc-img{width:78px;flex-shrink:0;background:#0d0f1a;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.jc-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.jc-img .noimg{font-size:26px;color:var(--border);}
+.jc-body{flex:1;padding:10px 12px;overflow:hidden;}
+.jc-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.jc-dept{font-size:15px;font-weight:700;color:var(--accent2);letter-spacing:.5px;}
+.jc-badge{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap;}
+.badge-a{background:rgba(255,107,53,.15);color:var(--warn);border:1px solid rgba(255,107,53,.3);}
+.badge-b{background:rgba(59,126,255,.12);color:var(--accent);border:1px solid rgba(59,126,255,.25);}
+.badge-c{background:rgba(122,130,160,.1);color:var(--muted);border:1px solid var(--border);}
+.jc-detail{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.jc-meta{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── FAB group ── */
+.fab-group{position:fixed;bottom:24px;right:20px;z-index:200;display:flex;flex-direction:column;align-items:flex-end;gap:12px;}
+.fab{
+  width:56px;height:56px;border-radius:50%;border:none;
+  background:var(--accent2);color:#0f1117;
+  font-size:28px;line-height:1;cursor:pointer;
+  box-shadow:0 4px 20px rgba(0,212,170,.45);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,box-shadow .15s;
+}
+.fab:active{transform:scale(.9);}
+.fab-chem{
+  width:48px;height:48px;border-radius:50%;border:none;
+  background:#8b5cf6;color:#fff;
+  font-size:22px;cursor:pointer;
+  box-shadow:0 4px 16px rgba(139,92,246,.45);
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;
+}
+.fab-chem:active{transform:scale(.9);}
+.fab-chem.hidden{display:none;}
+
+/* ── Empty / Loading ── */
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty .ei{font-size:48px;margin-bottom:12px;}
+.loading{display:flex;flex-direction:column;align-items:center;padding:60px 20px;gap:16px;}
+.spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── Sub topbar ── */
+.sub-topbar{
+  background:var(--surface);border-bottom:1px solid var(--border);
+  padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;
+}
+.back-btn{background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:2px 6px;line-height:1;}
+.sub-title{flex:1;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+.form-scroll{flex:1;overflow-y:auto;padding:16px 16px 100px;}
+.form-body{display:flex;flex-direction:column;gap:14px;}
+
+/* ── before-img ── */
+.before-img{border-radius:var(--r);overflow:hidden;background:var(--card);border:1px solid var(--border);aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;position:relative;}
+.before-img img{width:100%;height:100%;object-fit:cover;display:block;}
+.no-photo{display:flex;flex-direction:column;align-items:center;gap:8px;font-size:40px;color:var(--border);}
+.no-photo span{font-size:12px;color:var(--muted);font-family:'Sarabun',sans-serif;}
+.before-label{position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,.55);color:rgba(255,255,255,.7);font-size:11px;text-align:center;padding:4px;}
+
+/* ── info card ── */
+.info-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.ic-head{padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--accent);background:rgba(59,126,255,.07);border-bottom:1px solid var(--border);text-transform:uppercase;}
+.ic-row{display:flex;padding:8px 14px;border-bottom:1px solid rgba(46,51,80,.4);gap:8px;}
+.ic-row:last-child{border-bottom:none;}
+.ic-lbl{font-size:12px;color:var(--muted);flex-shrink:0;width:88px;padding-top:1px;}
+.ic-val{font-size:13px;flex:1;word-break:break-word;}
+.ic-val.hl{color:var(--warn);font-weight:500;}
+
+/* ── form card ── */
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.fc-head{padding:7px 14px;font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--accent2);background:rgba(0,212,170,.06);border-bottom:1px solid var(--border);text-transform:uppercase;}
+.fc-body{padding:14px;display:flex;flex-direction:column;gap:14px;}
+
+/* ── field ── */
+.flabel{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;letter-spacing:.3px;}
+.flabel .req{color:var(--danger);}
+.flabel .col-name{color:var(--accent2);font-weight:700;}
+
+input[type="date"],input[type="number"],select,textarea,.text-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:10px 12px;color:var(--text);
+  font-family:'Sarabun',sans-serif;font-size:14px;outline:none;
+  transition:border .2s;-webkit-appearance:none;appearance:none;
+}
+input[type="date"]:focus,input[type="number"]:focus,select:focus,textarea:focus,.text-input:focus{border-color:var(--accent);}
+select option{background:var(--card);}
+textarea{resize:vertical;min-height:72px;}
+input[type="number"]{-moz-appearance:textfield;}
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
+/* ── date display BE ── */
+.date-display{
+  background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  padding:10px 12px;font-size:14px;color:var(--text);
+  display:flex;align-items:center;justify-content:space-between;cursor:pointer;
+}
+.date-display:hover{border-color:var(--accent);}
+.dd-placeholder{color:var(--muted);}
+.dd-val{color:var(--accent2);font-weight:500;}
+
+/* ── YES/NO toggle ── */
+.yn-wrap{display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid var(--border);}
+.yn-btn{flex:1;padding:10px;background:var(--surface);color:var(--muted);border:none;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;transition:all .2s;}
+.yn-btn.yes-on{background:#16a34a;color:#fff;}
+.yn-btn.no-on{background:#dc2626;color:#fff;}
+
+/* ── docno display ── */
+.docno-display{background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.25);border-radius:8px;padding:10px 14px;font-size:15px;font-weight:700;color:var(--accent2);letter-spacing:1px;font-family:monospace;}
+
+/* ── photo upload ── */
+.photo-area{border:2px dashed var(--border);border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+.pa-icon{font-size:28px;}
+.pa-txt{font-size:12px;color:var(--muted);text-align:center;}
+.photo-btns{display:flex;gap:8px;width:100%;}
+.pbtn{flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .15s;}
+.pbtn:hover{border-color:var(--accent2);color:var(--accent2);}
+.preview-wrap{position:relative;border-radius:8px;overflow:hidden;aspect-ratio:4/3;background:var(--surface);}
+.preview-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+.preview-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;}
+
+/* ── save bar ── */
+.save-bar{position:fixed;bottom:0;left:0;right:0;padding:12px 16px;background:var(--surface);border-top:1px solid var(--border);z-index:200;display:flex;gap:10px;}
+.cancel-btn{padding:13px 20px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:15px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.cancel-btn:hover{border-color:var(--danger);color:var(--danger);}
+.save-btn{flex:1;padding:13px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;}
+.save-btn:active{transform:scale(.97);}
+.save-btn.saving{background:var(--warn);}
+.save-btn:disabled{background:var(--border);cursor:not-allowed;}
+
+/* ── toast ── */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--card);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;border:1px solid var(--border);opacity:0;transition:all .3s;pointer-events:none;z-index:999;white-space:nowrap;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.ok{border-color:var(--success);color:var(--success);}
+.toast.err{border-color:var(--danger);color:var(--danger);}
+
+/* ── overlay ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+.overlay.show{display:flex;}
+.ov-txt{font-size:14px;color:var(--muted);}
+.ov-bar{width:200px;height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.ov-inner{height:100%;background:var(--accent);width:0;transition:width .4s;border-radius:2px;}
+
+/* ── hidden ── */
+.hidden-input{display:none;}
+
+/* ══════════════════════════════════════════
+   LOGIN PAGE
+══════════════════════════════════════════ */
+.login-page{
+  display:none;min-height:100vh;flex-direction:column;
+  align-items:center;justify-content:flex-start;
+  background:var(--bg);
+  padding:0 0 40px 0;
+  overflow-y:auto;
+}
+.login-page.on{display:flex;}
+
+/* logo area */
+.logo-area{
+  width:100%;display:flex;flex-direction:column;align-items:center;
+  padding:40px 20px 24px;
+  background:linear-gradient(180deg,rgba(59,126,255,.08) 0%,transparent 100%);
+  border-bottom:1px solid var(--border);
+  margin-bottom:20px;
+}
+.logo-btn{
+  background:none;border:none;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  padding:8px;border-radius:16px;transition:transform .15s;
+  -webkit-tap-highlight-color:transparent;
+}
+.logo-btn:active{transform:scale(.94);}
+.logo-icon{
+  width:72px;height:72px;border-radius:20px;
+  background:linear-gradient(135deg,var(--accent) 0%,var(--accent2) 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:36px;
+  box-shadow:0 8px 32px rgba(59,126,255,.35);
+  transition:box-shadow .3s;
+}
+.logo-icon:hover{box-shadow:0 8px 32px rgba(59,126,255,.55);}
+.logo-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.5px;}
+.logo-sub{font-size:12px;color:var(--muted);}
+.logo-tap-hint{font-size:10px;color:rgba(122,130,160,.4);margin-top:4px;}
+
+/* user grid */
+.login-section{width:100%;max-width:480px;padding:0 16px;}
+.ls-title{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.8px;text-transform:uppercase;margin-bottom:10px;padding:0 2px;}
+.user-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.user-card{
+  background:var(--card);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:8px;
+  cursor:pointer;transition:all .15s;position:relative;overflow:hidden;
+}
+.user-card:active{transform:scale(.96);}
+.user-card:hover{border-color:var(--accent2);}
+.user-card.logged-in{opacity:.45;pointer-events:none;}
+.user-card.logged-in::after{content:"ออนไลน์";position:absolute;top:6px;right:6px;font-size:9px;background:var(--success);color:#000;padding:2px 6px;border-radius:8px;font-weight:700;}
+.uc-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff;flex-shrink:0;}
+.uc-avatar.leader{background:linear-gradient(135deg,var(--warn),#ff4444);}
+.uc-name{font-size:14px;font-weight:600;text-align:center;}
+.uc-role{font-size:10px;color:var(--muted);}
+.uc-role.leader-tag{color:var(--warn);}
+
+/* password modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:800;align-items:center;justify-content:center;padding:20px;}
+.modal-overlay.show{display:flex;}
+.modal-box{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:340px;}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:6px;}
+.modal-sub{font-size:12px;color:var(--muted);margin-bottom:20px;}
+.modal-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 14px;color:var(--text);font-family:'Sarabun',sans-serif;font-size:16px;outline:none;transition:border .2s;letter-spacing:4px;text-align:center;}
+.modal-input:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:10px;margin-top:16px;}
+.modal-cancel{flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;}
+.modal-ok{flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+
+/* ══════════════════════════════════════════
+   SHIFT SELECT PAGE
+══════════════════════════════════════════ */
+.shift-page{display:none;min-height:100vh;flex-direction:column;background:var(--bg);}
+.shift-page.on{display:flex;}
+.shift-scroll{flex:1;overflow-y:auto;padding:24px 16px 40px;}
+.shift-header{text-align:center;margin-bottom:32px;}
+.shift-header h2{font-size:22px;font-weight:700;margin-bottom:6px;}
+.shift-header p{font-size:13px;color:var(--muted);}
+.shift-grid{display:flex;flex-direction:column;gap:14px;max-width:400px;margin:0 auto;}
+.shift-card{
+  background:var(--card);border:2px solid var(--border);border-radius:16px;
+  padding:20px;display:flex;align-items:center;gap:16px;
+  cursor:pointer;transition:all .2s;
+}
+.shift-card:active{transform:scale(.97);}
+.shift-card.morning:hover,.shift-card.morning:active{border-color:var(--shift-morning);background:rgba(245,158,11,.06);}
+.shift-card.noon:hover,.shift-card.noon:active{border-color:var(--shift-noon);background:rgba(59,130,246,.06);}
+.shift-card.night:hover,.shift-card.night:active{border-color:var(--shift-night);background:rgba(139,92,246,.06);}
+.sc-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;}
+.sc-icon.morning{background:rgba(245,158,11,.15);}
+.sc-icon.noon{background:rgba(59,130,246,.15);}
+.sc-icon.night{background:rgba(139,92,246,.15);}
+.sc-info{flex:1;}
+.sc-name{font-size:17px;font-weight:700;margin-bottom:3px;}
+.sc-name.morning{color:var(--shift-morning);}
+.sc-name.noon{color:var(--shift-noon);}
+.sc-name.night{color:var(--shift-night);}
+.sc-time{font-size:12px;color:var(--muted);}
+.sc-arr{font-size:20px;color:var(--border);}
+
+/* ══════════════════════════════════════════
+   ROUTINE PAGE (เช้า / เที่ยง)
+══════════════════════════════════════════ */
+.routine-page{display:none;min-height:100vh;flex-direction:column;background:var(--bg);}
+.routine-page.on{display:flex;}
+
+/* progress bar routine */
+.routine-progress{padding:12px 16px 0;}
+.rp-label{font-size:11px;color:var(--muted);margin-bottom:6px;display:flex;justify-content:space-between;}
+.rp-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.rp-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:3px;transition:width .4s ease;}
+
+/* section divider */
+.section-divider{
+  display:flex;align-items:center;gap:10px;
+  padding:0 2px;margin:4px 0 2px;
+}
+.sd-line{flex:1;height:1px;background:var(--border);}
+.sd-txt{font-size:11px;color:var(--muted);white-space:nowrap;font-weight:600;letter-spacing:.5px;}
+
+/* value display (filled) */
+.val-display{
+  background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.2);
+  border-radius:8px;padding:10px 12px;font-size:15px;font-weight:700;
+  color:var(--accent2);display:flex;align-items:center;justify-content:space-between;
+}
+.vd-unit{font-size:11px;font-weight:400;color:var(--muted);}
+
+/* warn box */
+.warn-box{
+  background:rgba(255,107,53,.1);border:1px solid rgba(255,107,53,.3);
+  border-radius:8px;padding:10px 14px;font-size:13px;color:var(--warn);
+  display:flex;align-items:center;gap:8px;
+}
+
+/* complete banner */
+.complete-banner{
+  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);
+  border-radius:12px;padding:16px;text-align:center;
+}
+.cb-icon{font-size:32px;margin-bottom:8px;}
+.cb-txt{font-size:15px;font-weight:700;color:var(--success);margin-bottom:4px;}
+.cb-sub{font-size:12px;color:var(--muted);}
+.cb-btn{
+  margin-top:14px;width:100%;padding:13px;border-radius:10px;border:none;
+  background:var(--success);color:#fff;font-family:'Sarabun',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+}
+
+/* ══════════════════════════════════════════
+   CHEMICAL PAGE (กะดึก)
+══════════════════════════════════════════ */
+.chem-page{display:none;min-height:100vh;flex-direction:column;background:var(--bg);}
+.chem-page.on{display:flex;}
+
+/* ══════════════════════════════════════════
+   USER BADGE (topbar)
+══════════════════════════════════════════ */
+.user-badge{
+  display:flex;align-items:center;gap:8px;
+  background:var(--card);border:1px solid var(--border);
+  border-radius:20px;padding:5px 12px 5px 6px;
+  cursor:pointer;transition:all .15s;
+}
+.user-badge:hover{border-color:var(--danger);}
+.ub-dot{width:8px;height:8px;border-radius:50%;background:var(--success);flex-shrink:0;}
+.ub-name{font-size:12px;font-weight:600;}
+.ub-logout{font-size:10px;color:var(--danger);margin-left:4px;}
+
+/* shift badge in topbar */
+.shift-badge{
+  font-size:10px;padding:3px 10px;border-radius:10px;font-weight:700;
+  white-space:nowrap;
+}
+.shift-badge.เช้า{background:rgba(245,158,11,.15);color:var(--shift-morning);border:1px solid rgba(245,158,11,.3);}
+.shift-badge.เที่ยง{background:rgba(59,130,246,.15);color:var(--shift-noon);border:1px solid rgba(59,130,246,.3);}
+.shift-badge.ดึก{background:rgba(139,92,246,.15);color:var(--shift-night);border:1px solid rgba(139,92,246,.3);}
+.shift-badge.admin{background:rgba(255,68,68,.15);color:var(--danger);border:1px solid rgba(255,68,68,.3);}
+
+/* routine-required notice */
+.routine-required{
+  background:rgba(255,107,53,.08);border:1px solid rgba(255,107,53,.25);
+  border-radius:10px;margin:12px 16px 0;padding:12px 14px;
+  display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;
+}
+.routine-required:hover{border-color:var(--warn);}
+.rr-icon{font-size:22px;flex-shrink:0;}
+.rr-txt{flex:1;}
+.rr-title{font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px;}
+.rr-sub{font-size:11px;color:var(--muted);}
+.rr-arr{font-size:18px;color:var(--warn);}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE: LOGIN
+═══════════════════════════════════════════════════ -->
+<div id="pgLogin" class="login-page on">
+
+  <!-- โลโก้ (กด 5 ครั้ง → admin) -->
+  <div class="logo-area">
+    <button class="logo-btn" id="logoBtn" onclick="onLogoBtnTap()">
+      <div class="logo-icon">🔧</div>
+      <div class="logo-title">มณีจันทร์รีสอร์ท</div>
+      <div class="logo-sub">ระบบงานช่าง</div>
+    </button>
+    <div class="logo-tap-hint" id="logoTapHint"></div>
+  </div>
+
+  <!-- รายชื่อช่าง -->
+  <div class="login-section">
+    <div class="ls-title">👷 เลือกชื่อของคุณ</div>
+    <div class="user-grid" id="userGrid">
+      <div class="loading" style="grid-column:1/-1"><div class="spin"></div></div>
+    </div>
+
+    <!-- หัวหน้า section -->
+    <div class="ls-title">👑 หัวหน้า (ต้องใส่รหัสผ่าน)</div>
+    <div class="user-grid" id="leaderGrid">
+      <div class="loading" style="grid-column:1/-1"><div class="spin"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE: SHIFT SELECT
+═══════════════════════════════════════════════════ -->
+<div id="pgShift" class="shift-page">
+  <div class="sub-topbar">
+    <button class="back-btn" onclick="doLogout()">&#8592;</button>
+    <div class="sub-title" id="shiftUserName">เลือกกะ</div>
+  </div>
+  <div class="shift-scroll">
+    <div class="shift-header">
+      <h2>เลือกกะทำงาน</h2>
+      <p>เลือกกะของคุณก่อนเข้าระบบ</p>
+    </div>
+    <div class="shift-grid">
+      <div class="shift-card morning" onclick="selectShift('เช้า')">
+        <div class="sc-icon morning">🌅</div>
+        <div class="sc-info">
+          <div class="sc-name morning">กะเช้า</div>
+          <div class="sc-time">06:00 – 14:00 น.</div>
+        </div>
+        <div class="sc-arr">›</div>
+      </div>
+      <div class="shift-card noon" onclick="selectShift('เที่ยง')">
+        <div class="sc-icon noon">☀️</div>
+        <div class="sc-info">
+          <div class="sc-name noon">กะเที่ยง</div>
+          <div class="sc-time">14:00 – 22:00 น.</div>
+        </div>
+        <div class="sc-arr">›</div>
+      </div>
+      <div class="shift-card night" onclick="selectShift('ดึก')">
+        <div class="sc-icon night">🌙</div>
+        <div class="sc-info">
+          <div class="sc-name night">กะดึก</div>
+          <div class="sc-time">21:00 – 06:00 น.</div>
+        </div>
+        <div class="sc-arr">›</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE: ROUTINE (กะเช้า / กะเที่ยง)
+═══════════════════════════════════════════════════ -->
+<div id="pgRoutine" class="routine-page">
+  <div class="sub-topbar">
+    <button class="back-btn" onclick="showPage('pgShift')">&#8592;</button>
+    <div class="sub-title" id="routineTitle">ลูทีนประจำกะ</div>
+    <div class="led" id="ledRoutine"></div>
+  </div>
+
+  <!-- progress -->
+  <div class="routine-progress">
+    <div class="rp-label">
+      <span id="rpLabel">ความคืบหน้า</span>
+      <span id="rpPct">0%</span>
+    </div>
+    <div class="rp-bar"><div class="rp-fill" id="rpFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="form-scroll">
+    <div class="form-body" id="routineBody">
+      <!-- inject by JS -->
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <button class="save-btn" id="saveRoutineBtn" onclick="doSaveRoutine()">💾 บันทึกลูทีน</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE: CHEMICAL LOG (กะดึก + add from job list)
+═══════════════════════════════════════════════════ -->
+<div id="pgChem" class="chem-page">
+  <div class="sub-topbar">
+    <button class="back-btn" id="chemBackBtn" onclick="goChemBack()">&#8592;</button>
+    <div class="sub-title">🧪 บันทึกสารเคมีสระน้ำ</div>
+    <div class="led" id="ledChem"></div>
+  </div>
+
+  <div class="form-scroll">
+    <div class="form-body">
+
+      <div class="form-card">
+        <div class="fc-head">📅 วันที่บันทึก</div>
+        <div class="fc-body">
+          <div class="field">
+            <label class="flabel"><span class="col-name">วันที่</span> <span class="req">*</span></label>
+            <div class="date-display" onclick="document.getElementById('chemDateInput').showPicker()">
+              <span id="chemDateTxt" class="dd-placeholder">เลือกวันที่…</span>
+              <span style="color:var(--muted)">📅</span>
+            </div>
+            <input type="date" id="chemDateInput" class="hidden-input" onchange="onDateChange('chemDateInput','chemDateTxt')">
+          </div>
+          <div id="chemDateNote" style="font-size:11px;color:var(--muted);display:none;">
+            💡 โซดาแอชที่ใส่ตอนเช้า ให้เลือกเป็นวันก่อนหน้า (วันที่สั่งใส่)
+          </div>
+        </div>
+      </div>
+
+      <!-- ข้อมูลที่บันทึกไปแล้ว -->
+      <div id="chemExisting" style="display:none" class="form-card">
+        <div class="fc-head">✅ ข้อมูลที่บันทึกแล้ว</div>
+        <div class="fc-body" id="chemExistingBody"></div>
+      </div>
+
+      <div class="form-card">
+        <div class="fc-head">🧪 ใส่สารเคมี</div>
+        <div class="fc-body">
+          <div class="field">
+            <label class="flabel"><span class="col-name">คลอรีน</span> (กิโลกรัม)</label>
+            <input type="number" id="chemCL" step="0.1" min="0" placeholder="เช่น 2.5" class="text-input">
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">โซดาแอช</span> (กิโลกรัม)</label>
+            <input type="number" id="chemSoda" step="0.1" min="0" placeholder="เช่น 1.0" class="text-input">
+          </div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.6;">
+            💡 สามารถบันทึกเฉพาะคลอรีนก่อน แล้วค่อยกลับมาบันทึกโซดาแอชทีหลัง
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="save-bar">
+    <button class="cancel-btn" onclick="goChemBack()">ยกเลิก</button>
+    <button class="save-btn" id="saveChemBtn" onclick="doSaveChem()">💾 บันทึกสารเคมี</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE 1: รายการงานค้าง
+═══════════════════════════════════════════════════ -->
+<div id="pgList" class="page">
+
+  <div class="topbar">
+    <div class="topbar-info">
+      <div class="topbar-title">🔧 ปิดงานแจ้งซ่อม</div>
+      <div class="topbar-sub">มณีจันทร์รีสอร์ท</div>
+    </div>
+    <div id="shiftBadgeTop"></div>
+    <div class="user-badge" id="userBadge" onclick="confirmLogout()">
+      <div class="ub-dot"></div>
+      <span class="ub-name" id="ubName">–</span>
+      <span class="ub-logout">ออก</span>
+    </div>
+    <div class="led" id="led1"></div>
+  </div>
+
+  <!-- routine required notice -->
+  <div id="routineNotice" class="routine-required" style="display:none" onclick="goToRoutine()">
+    <div class="rr-icon">📋</div>
+    <div class="rr-txt">
+      <div class="rr-title">ยังทำลูทีนไม่ครบ!</div>
+      <div class="rr-sub">กดเพื่อไปบันทึกลูทีนประจำกะ</div>
+    </div>
+    <div class="rr-arr">›</div>
+  </div>
+
+  <div class="sticky-head">
+    <div class="search-wrap">
+      <input class="search-box" id="searchInput" type="search"
+             placeholder="🔍  DOC NO / สถานที่ / รายละเอียด…" oninput="doFilter()">
+    </div>
+    <div class="tabs">
+      <button class="tab on" id="tAll"  onclick="setTab('all')">ทั้งหมด</button>
+      <button class="tab"   id="tAck"  onclick="setTab('รับทราบ')">รับทราบ</button>
+      <button class="tab"   id="tWait" onclick="setTab('รอจัดซื้ออุปกรณ์')">รอจัดซื้อ</button>
+      <button class="tab"   id="tNew"  onclick="setTab('new')">ใหม่</button>
+    </div>
+    <div class="count-bar" id="countBar"></div>
+  </div>
+
+  <div class="job-scroll">
+    <div class="job-list" id="jobList">
+      <div class="loading"><div class="spin"></div><span style="font-size:13px;color:var(--muted)">กำลังโหลด…</span></div>
+    </div>
+  </div>
+
+  <div class="fab-group">
+    <!-- ปุ่มสารเคมี (กะดึก) -->
+    <button class="fab-chem hidden" id="fabChem" onclick="openChemFromList()" title="บันทึกสารเคมี">🧪</button>
+    <!-- ปุ่มเพิ่มงาน -->
+    <button class="fab" onclick="openAddJob()" title="เพิ่มงานแจ้งซ่อม">＋</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE 2: ปิดงาน
+═══════════════════════════════════════════════════ -->
+<div id="pgDetail" class="page">
+  <div class="sub-topbar">
+    <button class="back-btn" onclick="goList()">&#8592;</button>
+    <div class="sub-title" id="dtTitle">รายละเอียดงาน</div>
+    <div class="led" id="led2"></div>
+  </div>
+
+  <div class="form-scroll">
+    <div class="form-body">
+      <div class="before-img" id="beforeImg">
+        <div class="no-photo">📷<span>ไม่มีรูปก่อนซ่อม</span></div>
+      </div>
+      <div class="info-card">
+        <div class="ic-head">📋 ข้อมูลการแจ้งซ่อม</div>
+        <div class="ic-row"><span class="ic-lbl">DOC NO.</span><span class="ic-val" id="iDocNo">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">วันที่แจ้ง</span><span class="ic-val" id="iDateRep">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">แผนก</span><span class="ic-val" id="iDept">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">ผู้แจ้ง</span><span class="ic-val" id="iReporter">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">สถานที่</span><span class="ic-val" id="iLocation">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">ประเภท</span><span class="ic-val" id="iType">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">รายละเอียด</span><span class="ic-val hl" id="iDetail">–</span></div>
+        <div class="ic-row"><span class="ic-lbl">สถานะ</span><span class="ic-val" id="iProgress">–</span></div>
+      </div>
+      <div class="form-card">
+        <div class="fc-head">✏️ กรอกข้อมูลปิดงาน</div>
+        <div class="fc-body">
+          <div class="field">
+            <label class="flabel"><span class="col-name">วันที่เสร็จ</span> <span class="req">*</span></label>
+            <div class="date-display" onclick="document.getElementById('closeDateInput').showPicker()">
+              <span id="closeDateTxt" class="dd-placeholder">เลือกวันที่…</span>
+              <span style="color:var(--muted)">📅</span>
+            </div>
+            <input type="date" id="closeDateInput" class="hidden-input" onchange="onDateChange('closeDateInput','closeDateTxt')">
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">ความคืบหน้า</span> <span class="req">*</span></label>
+            <select id="fProg">
+              <option value="">— เลือกสถานะ —</option>
+              <option>ดำเนินการเรียบร้อย</option>
+              <option>รับทราบ</option>
+              <option>ติดต่อช่างนอก</option>
+              <option>ติดต่อช่างนอก , ดำเนินการเรียบร้อย</option>
+              <option>รอจัดซื้ออุปกรณ์</option>
+              <option>ยกเลิกการซ่อม</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">ผู้ซ่อมหลัก</span></label>
+            <select id="fMain"><option value="">— เลือกช่าง —</option>
+              <option>ช่างชัย</option><option>ช่างไฟว์</option><option>ช่างโอ</option>
+              <option>ช่างต้น</option><option>ช่างแลน</option><option>ช่างโบ้</option><option>ช่างเบียร์</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">ผู้ช่วยคนที่ 1</span></label>
+            <select id="fT1"><option value="">— ไม่มี —</option>
+              <option>ช่างชัย</option><option>ช่างไฟว์</option><option>ช่างโอ</option>
+              <option>ช่างต้น</option><option>ช่างแลน</option><option>ช่างโบ้</option><option>ช่างเบียร์</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">ผู้ช่วยคนที่ 2</span></label>
+            <select id="fT2"><option value="">— ไม่มี —</option>
+              <option>ช่างชัย</option><option>ช่างไฟว์</option><option>ช่างโอ</option>
+              <option>ช่างต้น</option><option>ช่างแลน</option><option>ช่างโบ้</option><option>ช่างเบียร์</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">คำแนะนำจากช่าง</span></label>
+            <textarea id="fAdvice" placeholder="บันทึกคำแนะนำ…"></textarea>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">รูปหลังซ่อม</span></label>
+            <div id="pvWrap2" style="display:none" class="preview-wrap">
+              <img id="pvImg2" src="" alt="preview">
+              <button class="preview-del" onclick="clearPhoto('close')">✕</button>
+            </div>
+            <div id="photoArea2" class="photo-area">
+              <div class="pa-icon">📷</div>
+              <div class="pa-txt">เลือกวิธีอัพรูปหลังซ่อม</div>
+              <div class="photo-btns">
+                <button class="pbtn" onclick="document.getElementById('fc2').click()">📸 ถ่ายเลย</button>
+                <button class="pbtn" onclick="document.getElementById('fg2').click()">🖼️ เลือกรูป</button>
+              </div>
+            </div>
+            <input type="file" id="fc2" class="hidden-input" accept="image/*" capture="environment" onchange="handlePhoto(this,'close')">
+            <input type="file" id="fg2" class="hidden-input" accept="image/*" onchange="handlePhoto(this,'close')">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="save-bar">
+    <button class="cancel-btn" onclick="goList()">ยกเลิก</button>
+    <button class="save-btn" id="saveCloseBtn" onclick="doSaveClose()">💾 บันทึกปิดงาน</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  PAGE 3: เพิ่มงานแจ้งซ่อมใหม่
+═══════════════════════════════════════════════════ -->
+<div id="pgAdd" class="page">
+  <div class="sub-topbar">
+    <button class="back-btn" onclick="goList()">&#8592;</button>
+    <div class="sub-title">➕ แจ้งซ่อมใหม่</div>
+  </div>
+  <div class="form-scroll">
+    <div class="form-body">
+      <div class="form-card">
+        <div class="fc-head">📝 กรอกข้อมูลการแจ้งซ่อม</div>
+        <div class="fc-body">
+          <div class="field">
+            <label class="flabel"><span class="col-name">DOC NO.</span> — สร้างอัตโนมัติ</label>
+            <div class="docno-display" id="addDocNo">…</div>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">วันที่แจ้ง</span> <span class="req">*</span></label>
+            <div class="date-display" onclick="document.getElementById('addDateInput').showPicker()">
+              <span id="addDateTxt" class="dd-placeholder">เลือกวันที่…</span>
+              <span style="color:var(--muted)">📅</span>
+            </div>
+            <input type="date" id="addDateInput" class="hidden-input" onchange="onDateChange('addDateInput','addDateTxt')">
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">แผนกที่แจ้ง</span> <span class="req">*</span></label>
+            <select id="addDept">
+              <option value="">— เลือกแผนก —</option>
+              <option>AC</option><option>BQ</option><option>EN</option><option>FB</option>
+              <option>FO</option><option>GF</option><option>HK</option><option>HR</option>
+              <option>LD</option><option>MK</option><option>SC</option><option>SE</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">คนที่แจ้ง</span> <span class="req">*</span></label>
+            <input class="text-input" id="addReporter" type="text" placeholder="ชื่อผู้แจ้ง…">
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">สถานที่ซ่อม</span> <span class="req">*</span></label>
+            <input class="text-input" id="addLocation" type="text" placeholder="ระบุสถานที่…">
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">คนเจอปัญหา</span> <span class="req">*</span></label>
+            <select id="addFoundBy">
+              <option value="">— เลือก —</option>
+              <option>พนักงาน</option>
+              <option>ลูกค้า</option>
+              <option>ตามตารางซ่อมบำรุง</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">ภายใน 3 เดือนที่ผ่านมา จุดนี้เคยแจ้งซ่อมมาแล้ว?</span> <span class="req">*</span></label>
+            <div class="yn-wrap">
+              <button class="yn-btn" id="ynYes" onclick="setYN(true)">YES</button>
+              <button class="yn-btn" id="ynNo"  onclick="setYN(false)">NO</button>
+            </div>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">ประเภทปัญหา</span> <span class="req">*</span></label>
+            <select id="addType">
+              <option value="">— เลือกประเภท —</option>
+              <option>ประปา</option><option>ไฟฟ้า</option><option>แอร์</option>
+              <option>เฟอร์นิเจอร์</option><option>กล้องวงจรปิด</option>
+              <option>อินเตอร์เน็ตและคอมพิวเตอร์</option><option>อื่นๆ</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">รูปภาพ (ก่อนซ่อม)</span> <span class="req">*</span></label>
+            <div id="pvWrap3" style="display:none" class="preview-wrap">
+              <img id="pvImg3" src="" alt="preview">
+              <button class="preview-del" onclick="clearPhoto('add')">✕</button>
+            </div>
+            <div id="photoArea3" class="photo-area">
+              <div class="pa-icon">📷</div>
+              <div class="pa-txt">เลือกวิธีอัพรูปก่อนซ่อม</div>
+              <div class="photo-btns">
+                <button class="pbtn" onclick="document.getElementById('fc3').click()">📸 ถ่ายเลย</button>
+                <button class="pbtn" onclick="document.getElementById('fg3').click()">🖼️ เลือกรูป</button>
+              </div>
+            </div>
+            <input type="file" id="fc3" class="hidden-input" accept="image/*" capture="environment" onchange="handlePhoto(this,'add')">
+            <input type="file" id="fg3" class="hidden-input" accept="image/*" onchange="handlePhoto(this,'add')">
+          </div>
+          <div class="field">
+            <label class="flabel"><span class="col-name">รายละเอียดปัญหา</span> <span class="req">*</span></label>
+            <textarea id="addDetail" placeholder="อธิบายปัญหาที่พบ…"></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="save-bar">
+    <button class="cancel-btn" onclick="goList()">ยกเลิก</button>
+    <button class="save-btn" id="saveAddBtn" onclick="doSaveAdd()">💾 บันทึกแจ้งซ่อม</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+  MODALS
+═══════════════════════════════════════════════════ -->
+
+<!-- Password Modal (หัวหน้า) -->
+<div class="modal-overlay" id="modalPass">
+  <div class="modal-box">
+    <div class="modal-title" id="modalPassTitle">ใส่รหัสผ่าน</div>
+    <div class="modal-sub" id="modalPassSub">กรอกรหัสผ่านของคุณ</div>
+    <input class="modal-input" id="modalPassInput" type="password" placeholder="••••••"
+           maxlength="10" onkeydown="if(event.key==='Enter') doPassConfirm()">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modalPass')">ยกเลิก</button>
+      <button class="modal-ok" onclick="doPassConfirm()">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Modal -->
+<div class="modal-overlay" id="modalAdmin">
+  <div class="modal-box">
+    <div class="modal-title">🔑 Admin Login</div>
+    <div class="modal-sub">ใส่รหัสผ่าน Admin</div>
+    <input class="modal-input" id="modalAdminInput" type="password" placeholder="••••••"
+           maxlength="10" onkeydown="if(event.key==='Enter') doAdminConfirm()">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modalAdmin');logoTapCount=0;">ยกเลิก</button>
+      <button class="modal-ok" onclick="doAdminConfirm()">เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Logout Confirm Modal -->
+<div class="modal-overlay" id="modalLogout">
+  <div class="modal-box">
+    <div class="modal-title">ออกจากระบบ?</div>
+    <div class="modal-sub" id="modalLogoutSub">ต้องการออกจากระบบหรือไม่</div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modalLogout')">ยกเลิก</button>
+      <button class="modal-ok" style="background:var(--danger)" onclick="doLogout()">ออกจากระบบ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="overlay" id="loadOverlay">
+  <div class="spin" style="width:40px;height:40px;border-width:4px;"></div>
+  <div class="ov-txt" id="loadTxt">กำลังโหลด…</div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════
+  JAVASCRIPT
+═══════════════════════════════════════════════════ -->
+<script>
+// ══════════════════════════════════════════
+//  CONFIG – ใส่ URL ของ Apps Script Web App
+// ══════════════════════════════════════════
+var API = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+var currentUser  = null;   // { name, role, shift }
+var allJobs      = [];
+var currentJob   = null;
+var activeTab    = "all";
+var photoClose   = null;
+var photoAdd     = null;
+var ynValue      = null;
+var logoTapCount = 0;
+var logoTapTimer = null;
+var pendingLoginName = null;   // ชื่อที่รอใส่รหัส
+
+var routineData  = {};         // ค่าที่กรอกไปแล้วในหน้า routine
+var routineComplete = false;
+
+// ══════════════════════════════════════════
+//  PAGE HELPER
+// ══════════════════════════════════════════
+function showPage(id) {
+  var pages = document.querySelectorAll(".page,.login-page,.shift-page,.routine-page,.chem-page");
+  pages.forEach(function(p){ p.classList.remove("on"); });
+  document.getElementById(id).classList.add("on");
+  window.scrollTo(0,0);
+}
+
+// ══════════════════════════════════════════
+//  ON LOAD
+// ══════════════════════════════════════════
+window.addEventListener("load", function(){
+  // ลอง restore session จาก localStorage
+  var saved = null;
+  try { saved = JSON.parse(localStorage.getItem("mjSession")); } catch(e){}
+  if (saved && saved.name) {
+    currentUser = saved;
+    afterLogin();
+  } else {
+    loadUsers();
+  }
+});
+
+// ══════════════════════════════════════════
+//  LOGO ADMIN TAP
+// ══════════════════════════════════════════
+function onLogoBtnTap() {
+  logoTapCount++;
+  clearTimeout(logoTapTimer);
+  if (logoTapCount >= 5) {
+    logoTapCount = 0;
+    document.getElementById("logoTapHint").textContent = "";
+    document.getElementById("modalAdminInput").value = "";
+    document.getElementById("modalAdmin").classList.add("show");
+    setTimeout(function(){ document.getElementById("modalAdminInput").focus(); }, 200);
+    return;
+  }
+  var left = 5 - logoTapCount;
+  document.getElementById("logoTapHint").textContent = "แตะอีก " + left + " ครั้ง";
+  logoTapTimer = setTimeout(function(){
+    logoTapCount = 0;
+    document.getElementById("logoTapHint").textContent = "";
+  }, 2000);
+}
+
+function doAdminConfirm() {
+  var pass = document.getElementById("modalAdminInput").value.trim();
+  callAPI(new URLSearchParams({ action:"adminLogin", password:pass }))
+    .then(function(r){
+      if (!r.ok) { toast("❌ " + r.msg,"err"); return; }
+      closeModal("modalAdmin");
+      currentUser = { name:"Admin", role:"admin", shift:"admin" };
+      try { localStorage.setItem("mjSession", JSON.stringify(currentUser)); } catch(e){}
+      afterLogin();
+    });
+}
+
+// ══════════════════════════════════════════
+//  LOAD USERS → แสดงใน Login
+// ══════════════════════════════════════════
+function loadUsers() {
+  callAPI(new URLSearchParams({ action:"getUsers" }))
+    .then(function(r){
+      if (!r.ok) { toast("❌ โหลดรายชื่อไม่ได้: " + r.msg,"err"); return; }
+      renderUserGrid(r.users);
+    })
+    .catch(function(){ toast("❌ ไม่สามารถเชื่อมต่อ API","err"); });
+}
+
+function renderUserGrid(users) {
+  var staffGrid  = document.getElementById("userGrid");
+  var leaderGrid = document.getElementById("leaderGrid");
+  staffGrid.innerHTML  = "";
+  leaderGrid.innerHTML = "";
+
+  var staff   = users.filter(function(u){ return u.role === "พนักงาน"; });
+  var leaders = users.filter(function(u){ return u.role === "หัวหน้า"; });
+
+  if (staff.length === 0) staffGrid.innerHTML = "<div style='color:var(--muted);font-size:13px;grid-column:1/-1;text-align:center;padding:20px'>ไม่มีข้อมูล</div>";
+  staff.forEach(function(u){ staffGrid.appendChild(makeUserCard(u)); });
+
+  if (leaders.length === 0) leaderGrid.innerHTML = "<div style='color:var(--muted);font-size:13px;grid-column:1/-1;text-align:center;padding:20px'>ไม่มีข้อมูล</div>";
+  leaders.forEach(function(u){ leaderGrid.appendChild(makeUserCard(u)); });
+}
+
+function makeUserCard(u) {
+  var div = document.createElement("div");
+  var isLeader = (u.role === "หัวหน้า");
+  div.className = "user-card" + (u.loggedIn ? " logged-in" : "");
+  div.innerHTML =
+    '<div class="uc-avatar' + (isLeader ? " leader" : "") + '">' + u.name.replace("ช่าง","").charAt(0) + '</div>' +
+    '<div class="uc-name">' + esc(u.name) + '</div>' +
+    '<div class="uc-role' + (isLeader ? " leader-tag" : "") + '">' + (isLeader ? "👑 หัวหน้า" : "พนักงาน") + '</div>';
+  if (!u.loggedIn) {
+    div.onclick = function(){ onUserCardClick(u); };
+  }
+  return div;
+}
+
+function onUserCardClick(u) {
+  if (u.role === "หัวหน้า") {
+    pendingLoginName = u.name;
+    document.getElementById("modalPassTitle").textContent = "รหัสผ่าน – " + u.name;
+    document.getElementById("modalPassSub").textContent   = "กรอกรหัสผ่านของคุณ";
+    document.getElementById("modalPassInput").value = "";
+    document.getElementById("modalPass").classList.add("show");
+    setTimeout(function(){ document.getElementById("modalPassInput").focus(); }, 200);
+  } else {
+    doLogin(u.name, "", "");
+  }
+}
+
+function doPassConfirm() {
+  var pass = document.getElementById("modalPassInput").value.trim();
+  if (!pass) { toast("⚠️ กรุณากรอกรหัสผ่าน","err"); return; }
+  closeModal("modalPass");
+  doLogin(pendingLoginName, pass, "");
+}
+
+function doLogin(name, pass, shift) {
+  showLoading("กำลังเข้าสู่ระบบ…");
+  callAPI(new URLSearchParams({ action:"login", name:name, password:pass, shift:shift }))
+    .then(function(r){
+      hideLoading();
+      if (!r.ok) { toast("❌ " + r.msg,"err"); return; }
+      currentUser = { name:r.name, role:r.role, shift:r.shift || "" };
+      try { localStorage.setItem("mjSession", JSON.stringify(currentUser)); } catch(e){}
+      afterLogin();
+    })
+    .catch(function(){ hideLoading(); toast("❌ เชื่อมต่อไม่ได้","err"); });
+}
+
+function afterLogin() {
+  if (currentUser.role === "admin") {
+    // admin ข้ามไปหน้างานซ่อมเลย
+    enterJobList();
+  } else if (!currentUser.shift) {
+    // ยังไม่ได้เลือกกะ
+    document.getElementById("shiftUserName").textContent = "สวัสดี " + currentUser.name;
+    showPage("pgShift");
+  } else {
+    checkRoutineThenEnter();
+  }
+}
+
+// ══════════════════════════════════════════
+//  SELECT SHIFT
+// ══════════════════════════════════════════
+function selectShift(shift) {
+  showLoading("กำลังบันทึกกะ…");
+  // อัพเดต shift ในระบบ (ส่ง login ใหม่พร้อม shift)
+  callAPI(new URLSearchParams({
+    action:"login",
+    name: currentUser.name,
+    password: "", // พนักงานไม่มีรหัส (session เดิมอาจค้างอยู่ → logout ก่อน)
+    shift: shift
+  })).then(function(r){
+    hideLoading();
+    // ถ้า session ค้างอยู่ อาจ error "ยังล็อกอินอยู่" → logout แล้ว login ใหม่
+    if (!r.ok && r.msg && r.msg.indexOf("ล็อกอินอยู่") !== -1) {
+      return callAPI(new URLSearchParams({ action:"logout", name:currentUser.name }))
+        .then(function(){
+          return callAPI(new URLSearchParams({ action:"login", name:currentUser.name, password:"", shift:shift }));
+        }).then(function(r2){
+          hideLoading();
+          if (!r2.ok) { toast("❌ " + r2.msg,"err"); return; }
+          currentUser.shift = shift;
+          try { localStorage.setItem("mjSession", JSON.stringify(currentUser)); } catch(e){}
+          checkRoutineThenEnter();
+        });
+    }
+    if (!r.ok) { toast("❌ " + r.msg,"err"); return; }
+    currentUser.shift = shift;
+    try { localStorage.setItem("mjSession", JSON.stringify(currentUser)); } catch(e){}
+    checkRoutineThenEnter();
+  }).catch(function(){ hideLoading(); toast("❌ เชื่อมต่อไม่ได้","err"); });
+}
+
+// ══════════════════════════════════════════
+//  CHECK ROUTINE
+// ══════════════════════════════════════════
+function checkRoutineThenEnter() {
+  var shift = currentUser.shift;
+  if (shift === "admin") { enterJobList(); return; }
+
+  var dateTH = getTodayTH();
+  callAPI(new URLSearchParams({ action:"getRoutineStatus", dateTH:dateTH, shift:shift }))
+    .then(function(r){
+      if (!r.ok) { enterJobList(); return; }
+      routineData     = r.data || {};
+      routineComplete = r.complete || false;
+
+      if (routineComplete) {
+        enterJobList();
+      } else if (shift === "ดึก") {
+        // กะดึก → เข้าหน้าเคมี
+        openChemPage(false);
+      } else {
+        // กะเช้า / กะเที่ยง → เข้าหน้า routine
+        openRoutinePage();
+      }
+    })
+    .catch(function(){ enterJobList(); });
+}
+
+// ══════════════════════════════════════════
+//  ENTER JOB LIST
+// ══════════════════════════════════════════
+function enterJobList() {
+  updateTopbar();
+  showPage("pgList");
+  syncBg(true);
+  // แสดงปุ่มสารเคมีถ้ากะดึก
+  var fabChem = document.getElementById("fabChem");
+  if (currentUser && currentUser.shift === "ดึก") {
+    fabChem.classList.remove("hidden");
+  } else {
+    fabChem.classList.add("hidden");
+  }
+  // เช็คว่า routine ครบหรือยัง
+  checkRoutineNotice();
+}
+
+function checkRoutineNotice() {
+  var notice = document.getElementById("routineNotice");
+  if (!currentUser || currentUser.role === "admin") { notice.style.display="none"; return; }
+  var dateTH = getTodayTH();
+  callAPI(new URLSearchParams({ action:"getRoutineStatus", dateTH:dateTH, shift:currentUser.shift }))
+    .then(function(r){
+      routineComplete = r.complete || false;
+      notice.style.display = routineComplete ? "none" : "flex";
+    }).catch(function(){ notice.style.display = "none"; });
+}
+
+function goToRoutine() {
+  if (currentUser.shift === "ดึก") openChemPage(false);
+  else openRoutinePage();
+}
+
+function updateTopbar() {
+  if (!currentUser) return;
+  document.getElementById("ubName").textContent = currentUser.name;
+  var badgeEl = document.getElementById("shiftBadgeTop");
+  if (currentUser.role === "admin") {
+    badgeEl.innerHTML = '<span class="shift-badge admin">ADMIN</span>';
+  } else {
+    badgeEl.innerHTML = '<span class="shift-badge ' + currentUser.shift + '">กะ' + currentUser.shift + '</span>';
+  }
+}
+
+// ══════════════════════════════════════════
+//  ROUTINE PAGE
+// ══════════════════════════════════════════
+function openRoutinePage() {
+  var shift = currentUser.shift;
+  document.getElementById("routineTitle").textContent =
+    shift === "เช้า" ? "🌅 ลูทีนกะเช้า" : "☀️ ลูทีนกะเที่ยง";
+  buildRoutineForm(shift);
+  showPage("pgRoutine");
+  updateRoutineProgress();
+}
+
+function buildRoutineForm(shift) {
+  var body = document.getElementById("routineBody");
+  var d    = routineData;
+  var html = "";
+
+  // ── วันที่ ─────────────────────────────
+  html += '<div class="form-card">' +
+    '<div class="fc-head">📅 วันที่บันทึก</div>' +
+    '<div class="fc-body">' +
+    '<div class="field"><label class="flabel"><span class="col-name">วันที่</span></label>' +
+    '<div style="background:rgba(0,212,170,.07);border:1px solid rgba(0,212,170,.25);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--accent2);font-weight:600;">' +
+    getTodayTH() + '</div></div>' +
+    '</div></div>';
+
+  // ── บ่อสระว่ายน้ำ ──────────────────────
+  html += '<div class="form-card">' +
+    '<div class="fc-head">🏊 สระว่ายน้ำ</div>' +
+    '<div class="fc-body">';
+
+  // ยุบตัวสระ
+  if (d.poolSub !== undefined) {
+    html += fieldDisplayed("การยุบตัวของน้ำ", d.poolSub, "cm");
+  } else {
+    html += numField("rtPoolSub","การยุบตัวของน้ำ (สระ)","cm","เช่น 3", "updateRoutineProgress()");
+  }
+
+  if (shift === "เช้า") {
+    // CL สระ
+    if (d.poolCL !== undefined) {
+      html += fieldDisplayed("CL (คลอรีน)", d.poolCL, "");
+    } else {
+      html += numField("rtPoolCL","CL (คลอรีน)","ทศนิยม 1 ตำแหน่ง","เช่น 1.5","updateRoutineProgress()");
+    }
+    // PH สระ
+    if (d.poolPH !== undefined) {
+      html += fieldDisplayed("PH", d.poolPH, "");
+    } else {
+      html += numField("rtPoolPH","PH","ทศนิยม 1 ตำแหน่ง","เช่น 7.2","updateRoutineProgress()");
+    }
+  }
+  html += '</div></div>';
+
+  // ── บ่อสำรองน้ำประปา ───────────────────
+  html += '<div class="form-card">' +
+    '<div class="fc-head">💧 บ่อสำรองน้ำประปา</div>' +
+    '<div class="fc-body">';
+
+  if (d.rsvSub !== undefined) {
+    html += fieldDisplayed("การยุบตัวของน้ำ (บ่อสำรอง)", d.rsvSub, "cm");
+  } else {
+    html += numField("rtRsvSub","การยุบตัวของน้ำ (บ่อสำรอง)","cm","เช่น 2","updateRoutineProgress()");
+  }
+
+  if (shift === "เช้า") {
+    if (d.rsvCL !== undefined) {
+      html += fieldDisplayed("CL (คลอรีน)", d.rsvCL, "");
+      if (parseFloat(d.rsvCL) < 3) {
+        html += '<div class="warn-box">⚠️ ค่า CL = ' + d.rsvCL + ' ต่ำกว่าเกณฑ์ กรุณาเติมคลอรีน!</div>';
+      }
+    } else {
+      html += numField("rtRsvCL","CL (คลอรีน) บ่อสำรอง","ต้องไม่ต่ำกว่า 3","เช่น 3.5","checkRsvCL()");
+      html += '<div id="rsvClWarn" style="display:none" class="warn-box">⚠️ กรุณาเติมคลอรีน! ค่าต่ำกว่า 3</div>';
+    }
+  }
+  html += '</div></div>';
+
+  body.innerHTML = html;
+}
+
+function numField(id, label, unit, placeholder, onchange) {
+  return '<div class="field"><label class="flabel">' +
+    '<span class="col-name">' + label + '</span>' +
+    (unit ? ' <span style="font-size:10px;color:var(--muted)">(' + unit + ')</span>' : '') +
+    '</label>' +
+    '<input type="number" id="' + id + '" step="0.1" min="0" placeholder="' + placeholder + '" class="text-input" oninput="' + onchange + '">' +
+    '</div>';
+}
+
+function fieldDisplayed(label, val, unit) {
+  return '<div class="field"><label class="flabel"><span class="col-name">' + label + '</span></label>' +
+    '<div class="val-display"><span>' + val + '</span>' +
+    (unit ? '<span class="vd-unit">' + unit + '</span>' : '<span class="vd-unit">✅ บันทึกแล้ว</span>') +
+    '</div></div>';
+}
+
+function checkRsvCL() {
+  var v = parseFloat(document.getElementById("rtRsvCL") ? document.getElementById("rtRsvCL").value : "");
+  var w = document.getElementById("rsvClWarn");
+  if (w) w.style.display = (!isNaN(v) && v < 3) ? "flex" : "none";
+  updateRoutineProgress();
+}
+
+function updateRoutineProgress() {
+  var shift = currentUser ? currentUser.shift : "เช้า";
+  var d     = routineData;
+  var filled = 0, total = 0;
+
+  function countField(id, already) {
+    total++;
+    if (already !== undefined) { filled++; return; }
+    var el = document.getElementById(id);
+    if (el && el.value.trim() !== "") filled++;
+  }
+
+  countField("rtPoolSub", d.poolSub);
+  countField("rtRsvSub",  d.rsvSub);
+
+  if (shift === "เช้า") {
+    countField("rtPoolCL", d.poolCL);
+    countField("rtPoolPH", d.poolPH);
+    countField("rtRsvCL",  d.rsvCL);
+  }
+
+  var pct = total > 0 ? Math.round(filled/total*100) : 0;
+  document.getElementById("rpFill").style.width  = pct + "%";
+  document.getElementById("rpPct").textContent   = pct + "%";
+  document.getElementById("rpLabel").textContent = filled + "/" + total + " หัวข้อ";
+}
+
+function doSaveRoutine() {
+  var shift  = currentUser.shift;
+  var dateTH = getTodayTH();
+  var d      = routineData;
+
+  // เก็บค่า
+  function getVal(id, already) {
+    if (already !== undefined) return already;
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  }
+
+  var poolSub = getVal("rtPoolSub", d.poolSub);
+  var rsvSub  = getVal("rtRsvSub",  d.rsvSub);
+  var poolCL  = "", poolPH = "", rsvCL = "";
+
+  if (shift === "เช้า") {
+    poolCL = getVal("rtPoolCL", d.poolCL);
+    poolPH = getVal("rtPoolPH", d.poolPH);
+    rsvCL  = getVal("rtRsvCL",  d.rsvCL);
+  }
+
+  // Validation
+  if (!poolSub) { toast("⚠️ กรุณากรอกการยุบตัวของสระ","err"); return; }
+  if (!rsvSub)  { toast("⚠️ กรุณากรอกการยุบตัวของบ่อสำรอง","err"); return; }
+  if (shift === "เช้า") {
+    if (!poolCL) { toast("⚠️ กรุณากรอก CL สระ","err"); return; }
+    if (!poolPH) { toast("⚠️ กรุณากรอก PH สระ","err"); return; }
+    if (!rsvCL)  { toast("⚠️ กรุณากรอก CL บ่อสำรอง","err"); return; }
+  }
+
+  var btn = document.getElementById("saveRoutineBtn");
+  btn.disabled = true; btn.innerHTML = "⏳ กำลังบันทึก…";
+  setLed("syncing","ledRoutine");
+
+  var params = new URLSearchParams({
+    action:     "saveRoutine",
+    dateTH:     dateTH,
+    shift:      shift,
+    recordedBy: currentUser.name,
+    poolSub:    poolSub,
+    rsvSub:     rsvSub
+  });
+  if (shift === "เช้า") {
+    params.set("poolCL", poolCL);
+    params.set("poolPH", poolPH);
+    params.set("rsvCL",  rsvCL);
+  }
+
+  callAPI(params).then(function(r){
+    setLed("ok","ledRoutine");
+    btn.disabled = false; btn.innerHTML = "💾 บันทึกลูทีน";
+    if (!r.ok) { toast("❌ " + r.msg,"err"); return; }
+    if (r.warnings && r.warnings.length > 0) {
+      toast("⚠️ " + r.warnings[0],"err");
+      setTimeout(function(){ enterJobList(); }, 2500);
+    } else {
+      toast("✅ บันทึกลูทีนสำเร็จ!","ok");
+      setTimeout(function(){ enterJobList(); }, 1200);
+    }
+  }).catch(function(){
+    setLed("ok","ledRoutine");
+    btn.disabled = false; btn.innerHTML = "💾 บันทึกลูทีน";
+    toast("❌ เชื่อมต่อไม่ได้","err");
+  });
+}
+
+// ══════════════════════════════════════════
+//  CHEMICAL PAGE
+// ══════════════════════════════════════════
+var chemFromList = false;
+
+function openChemPage(fromList) {
+  chemFromList = fromList || false;
+  // set วันที่เริ่มต้น = วันนี้
+  var today = new Date();
+  var iso   = today.getFullYear() + "-" +
+    pad(today.getMonth()+1) + "-" + pad(today.getDate());
+  document.getElementById("chemDateInput").value = iso;
+  onDateChange("chemDateInput","chemDateTxt");
+  document.getElementById("chemDateNote").style.display = "block";
+  document.getElementById("chemCL").value   = "";
+  document.getElementById("chemSoda").value = "";
+  document.getElementById("chemExisting").style.display = "none";
+
+  // โหลดข้อมูลที่บันทึกไปแล้ว
+  loadChemExisting();
+  showPage("pgChem");
+}
+
+function loadChemExisting() {
+  var dateTH = getTodayTH();
+  callAPI(new URLSearchParams({ action:"getChemicalToday", dateTH:dateTH, shift:"ดึก" }))
+    .then(function(r){
+      if (!r.ok || !r.data) return;
+      var d = r.data;
+      if (d.chlorine !== "" || d.sodaAsh !== "") {
+        var body = document.getElementById("chemExistingBody");
+        var html = "";
+        if (d.chlorine !== "" && d.chlorine !== undefined) {
+          html += '<div class="field"><label class="flabel"><span class="col-name">คลอรีน</span></label>' +
+            '<div class="val-display"><span>' + d.chlorine + '</span><span class="vd-unit">kg ✅</span></div></div>';
+        }
+        if (d.sodaAsh !== "" && d.sodaAsh !== undefined) {
+          html += '<div class="field"><label class="flabel"><span class="col-name">โซดาแอช</span></label>' +
+            '<div class="val-display"><span>' + d.sodaAsh + '</span><span class="vd-unit">kg ✅</span></div></div>';
+        }
+        body.innerHTML = html;
+        document.getElementById("chemExisting").style.display = "block";
+      }
+    });
+}
+
+function openChemFromList() {
+  openChemPage(true);
+}
+
+function goChemBack() {
+  if (chemFromList) { showPage("pgList"); }
+  else { enterJobList(); }
+}
+
+function doSaveChem() {
+  var cl   = document.getElementById("chemCL").value.trim();
+  var soda = document.getElementById("chemSoda").value.trim();
+  var dateTH = document.getElementById("chemDateTxt").textContent;
+
+  if (dateTH === "เลือกวันที่…" || !dateTH) { toast("⚠️ กรุณาเลือกวันที่","err"); return; }
+  if (!cl && !soda) { toast("⚠️ กรุณากรอกค่าอย่างน้อย 1 อย่าง","err"); return; }
+
+  var btn = document.getElementById("saveChemBtn");
+  btn.disabled = true; btn.innerHTML = "⏳ กำลังบันทึก…";
+  setLed("syncing","ledChem");
+
+  var params = new URLSearchParams({
+    action:     "saveChemical",
+    dateTH:     dateTH,
+    shift:      "ดึก",
+    recordedBy: currentUser ? currentUser.name : "unknown"
+  });
+  if (cl)   params.set("chlorine", cl);
+  if (soda) params.set("sodaAsh",  soda);
+
+  callAPI(params).then(function(r){
+    setLed("ok","ledChem");
+    btn.disabled = false; btn.innerHTML = "💾 บันทึกสารเคมี";
+    if (!r.ok) { toast("❌ " + r.msg,"err"); return; }
+    toast("✅ บันทึกสารเคมีสำเร็จ!","ok");
+    setTimeout(function(){ goChemBack(); }, 1200);
+    if (!chemFromList) enterJobList();
+  }).catch(function(){
+    setLed("ok","ledChem");
+    btn.disabled = false; btn.innerHTML = "💾 บันทึกสารเคมี";
+    toast("❌ เชื่อมต่อไม่ได้","err");
+  });
+}
+
+// ══════════════════════════════════════════
+//  LOGOUT
+// ══════════════════════════════════════════
+function confirmLogout() {
+  document.getElementById("modalLogoutSub").textContent =
+    currentUser ? ("ออกจากระบบ " + currentUser.name + "?") : "ต้องการออกหรือไม่?";
+  document.getElementById("modalLogout").classList.add("show");
+}
+
+function doLogout() {
+  closeModal("modalLogout");
+  if (currentUser) {
+    callAPI(new URLSearchParams({ action:"logout", name:currentUser.name }));
+  }
+  currentUser = null;
+  try { localStorage.removeItem("mjSession"); } catch(e){}
+  showPage("pgLogin");
+  loadUsers();
+}
+
+// ══════════════════════════════════════════
+//  JOB LIST (เดิม)
+// ══════════════════════════════════════════
+function syncBg(showLoader) {
+  if (showLoader) setLed("syncing","led1");
+  callAPI(new URLSearchParams({ action:"getPendingJobs" }))
+    .then(function(r){
+      setLed("ok","led1");
+      if (!r.ok) { toast("⚠️ "+r.msg,"err"); return; }
+      allJobs = r.jobs || [];
+      renderJobs();
+    })
+    .catch(function(){ setLed("ok","led1"); });
+}
+
+function renderJobs() {
+  var q    = document.getElementById("searchInput").value.toLowerCase();
+  var list = allJobs.filter(function(j){
+    if (activeTab === "รับทราบ") return j.progress === "รับทราบ";
+    if (activeTab === "รอจัดซื้ออุปกรณ์") return j.progress === "รอจัดซื้ออุปกรณ์";
+    if (activeTab === "new") return !j.progress;
+    return true;
+  }).filter(function(j){
+    if (!q) return true;
+    return (j.docNo+j.dept+j.location+j.detail+j.type).toLowerCase().indexOf(q) !== -1;
+  });
+
+  var el = document.getElementById("jobList");
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="ei">📭</div>ไม่พบรายการ</div>';
+    document.getElementById("countBar").innerHTML = "";
+    return;
+  }
+  document.getElementById("countBar").innerHTML = "แสดง <b>"+list.length+"</b> รายการ";
+
+  el.innerHTML = list.map(function(j){
+    var badge = j.progress === "รอจัดซื้ออุปกรณ์" ? '<span class="jc-badge badge-a">รอจัดซื้อ</span>'
+      : j.progress === "รับทราบ" ? '<span class="jc-badge badge-b">รับทราบ</span>'
+      : j.progress ? '<span class="jc-badge badge-c">'+esc(j.progress)+'</span>'
+      : '<span class="jc-badge badge-a">ใหม่</span>';
+    var img = j.imgBeforeUrl
+      ? '<img src="'+esc(j.imgBeforeUrl)+'" loading="lazy" onerror="this.style.display=\'none\'">'
+      : '<div class="noimg">🔧</div>';
+    return '<div class="job-card" onclick="openDetail(\''+esc(j.docNo)+'\')">'+
+      '<div class="jc-img">'+img+'</div>'+
+      '<div class="jc-body">'+
+        '<div class="jc-row1"><span class="jc-dept">'+esc(j.dept)+'</span>'+badge+'</div>'+
+        '<div class="jc-detail">'+esc(j.location)+'</div>'+
+        '<div class="jc-meta">'+esc(j.detail)+'</div>'+
+        '<div class="jc-meta" style="margin-top:2px;color:var(--border)">'+esc(j.docNo)+' · '+esc(j.dateReport)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join("");
+}
+
+function doFilter(){ renderJobs(); }
+function setTab(t){
+  activeTab=t;
+  ["tAll","tAck","tWait","tNew"].forEach(function(id){ document.getElementById(id).classList.remove("on"); });
+  var map={all:"tAll","รับทราบ":"tAck","รอจัดซื้ออุปกรณ์":"tWait","new":"tNew"};
+  if (map[t]) document.getElementById(map[t]).classList.add("on");
+  renderJobs();
+}
+function goList(){ showPage("pgList"); }
+
+// ══════════════════════════════════════════
+//  JOB DETAIL (ปิดงาน) เดิม
+// ══════════════════════════════════════════
+function openDetail(docNo) {
+  currentJob = allJobs.find(function(j){ return j.docNo === docNo; });
+  if (!currentJob) return;
+
+  document.getElementById("dtTitle").textContent = currentJob.dept+" · "+currentJob.docNo;
+  document.getElementById("iDocNo").textContent    = currentJob.docNo;
+  document.getElementById("iDateRep").textContent  = currentJob.dateReport;
+  document.getElementById("iDept").textContent     = currentJob.dept;
+  document.getElementById("iReporter").textContent = currentJob.reporter;
+  document.getElementById("iLocation").textContent = currentJob.location;
+  document.getElementById("iType").textContent     = currentJob.type;
+  document.getElementById("iDetail").textContent   = currentJob.detail;
+  document.getElementById("iProgress").textContent = currentJob.progress || "ใหม่";
+
+  var bi = document.getElementById("beforeImg");
+  if (currentJob.imgBeforeUrl) {
+    bi.innerHTML = '<img src="'+esc(currentJob.imgBeforeUrl)+'" style="width:100%;height:100%;object-fit:cover;"><div class="before-label">📷 รูปก่อนซ่อม</div>';
+  } else {
+    bi.innerHTML = '<div class="no-photo">📷<span>ไม่มีรูปก่อนซ่อม</span></div>';
+  }
+
+  document.getElementById("closeDateInput").value = "";
+  document.getElementById("closeDateTxt").textContent = "เลือกวันที่…";
+  document.getElementById("closeDateTxt").className   = "dd-placeholder";
+  document.getElementById("fProg").value    = currentJob.progress || "";
+  document.getElementById("fMain").value   = currentJob.techMain  || "";
+  document.getElementById("fT1").value     = currentJob.tech1     || "";
+  document.getElementById("fT2").value     = currentJob.tech2     || "";
+  document.getElementById("fAdvice").value = "";
+  clearPhoto("close");
+
+  showPage("pgDetail");
+}
+
+function doSaveClose() {
+  var dateTH   = getDateTH("closeDateInput");
+  var progress = document.getElementById("fProg").value;
+  var techMain = document.getElementById("fMain").value;
+  var tech1    = document.getElementById("fT1").value;
+  var tech2    = document.getElementById("fT2").value;
+  var advice   = document.getElementById("fAdvice").value.trim();
+
+  if (!dateTH)   { toast("⚠️ กรุณาเลือกวันที่เสร็จ","err"); return; }
+  if (!progress) { toast("⚠️ กรุณาเลือกความคืบหน้า","err"); return; }
+
+  var btn = document.getElementById("saveCloseBtn");
+  btn.disabled=true; btn.classList.add("saving"); btn.innerHTML="⏳ กำลังบันทึก…";
+
+  var ts = getTimestamp();
+  setLed("syncing","led2");
+
+  function doSave(imgPath) {
+    return callAPI(new URLSearchParams({
+      action:"saveJob", docNo:currentJob.docNo,
+      dateDoneTH:dateTH, progress:progress,
+      advice:advice, techMain:techMain, tech1:tech1, tech2:tech2,
+      imgPath:imgPath||""
+    }));
+  }
+
+  var p = photoClose
+    ? callAPI(new URLSearchParams({
+        action:"uploadImage", docNo:currentJob.docNo, timestamp:ts,
+        suffix:"หลัง", imgBase64:photoClose.base64, imgMime:photoClose.mime
+      })).then(function(r){ if(!r.ok) throw new Error(r.msg); return doSave(r.imgPath||""); })
+    : doSave("");
+
+  p.then(function(r){
+    setLed("ok","led2");
+    resetBtn("saveCloseBtn","💾 บันทึกปิดงาน");
+    if(!r.ok){ toast("❌ "+r.msg,"err"); return; }
+    goList(); toast("✅ ปิดงานสำเร็จ!","ok"); syncBg(false);
+  }).catch(function(e){
+    setLed("ok","led2");
+    resetBtn("saveCloseBtn","💾 บันทึกปิดงาน");
+    toast("❌ "+e.message,"err");
+  });
+}
+
+// ══════════════════════════════════════════
+//  ADD JOB (เดิม)
+// ══════════════════════════════════════════
+function openAddJob() {
+  document.getElementById("addDocNo").textContent = genDocNo();
+  document.getElementById("addDateInput").value   = "";
+  document.getElementById("addDateTxt").textContent = "เลือกวันที่…";
+  document.getElementById("addDateTxt").className    = "dd-placeholder";
+  document.getElementById("addDept").value     = "";
+  document.getElementById("addReporter").value = "";
+  document.getElementById("addLocation").value = "";
+  document.getElementById("addFoundBy").value  = "";
+  document.getElementById("addType").value     = "";
+  document.getElementById("addDetail").value   = "";
+  ynValue = null;
+  document.getElementById("ynYes").className = "yn-btn";
+  document.getElementById("ynNo").className  = "yn-btn";
+  clearPhoto("add");
+  showPage("pgAdd");
+}
+
+function doSaveAdd() {
+  var docNo    = document.getElementById("addDocNo").textContent.trim();
+  var dateTH   = getDateTH("addDateInput");
+  var dept     = document.getElementById("addDept").value;
+  var reporter = document.getElementById("addReporter").value.trim();
+  var location = document.getElementById("addLocation").value.trim();
+  var foundBy  = document.getElementById("addFoundBy").value;
+  var typeVal  = document.getElementById("addType").value;
+  var detail   = document.getElementById("addDetail").value.trim();
+
+  if(!dateTH)   { toast("⚠️ กรุณาเลือกวันที่แจ้ง","err"); return; }
+  if(!dept)     { toast("⚠️ กรุณาเลือกแผนก","err"); return; }
+  if(!reporter) { toast("⚠️ กรุณากรอกชื่อผู้แจ้ง","err"); return; }
+  if(!location) { toast("⚠️ กรุณากรอกสถานที่","err"); return; }
+  if(!foundBy)  { toast("⚠️ กรุณาเลือกคนเจอปัญหา","err"); return; }
+  if(ynValue === null) { toast("⚠️ กรุณาเลือก YES/NO","err"); return; }
+  if(!typeVal)  { toast("⚠️ กรุณาเลือกประเภทปัญหา","err"); return; }
+  if(!photoAdd) { toast("⚠️ กรุณาถ่าย/เลือกรูปก่อนซ่อม","err"); return; }
+  if(!detail)   { toast("⚠️ กรุณากรอกรายละเอียดปัญหา","err"); return; }
+
+  var btn=document.getElementById("saveAddBtn");
+  btn.disabled=true; btn.classList.add("saving"); btn.innerHTML="⏳ กำลังบันทึก…";
+
+  var ts=getTimestamp();
+  setLed("syncing","led1");
+  toast("📸 กำลังอัพรูป…","");
+
+  callAPI(new URLSearchParams({
+    action:"uploadImage", docNo:docNo, timestamp:ts,
+    suffix:"ก่อน", imgBase64:photoAdd.base64, imgMime:photoAdd.mime
+  })).then(function(r){
+    if(!r.ok) throw new Error("อัพรูปล้มเหลว: "+r.msg);
+    return callAPI(new URLSearchParams({
+      action:"addJob", docNo:docNo, dateRepTH:dateTH,
+      dept:dept, reporter:reporter, location:location,
+      foundBy:foundBy, repeat:String(ynValue), type:typeVal,
+      imgPath:r.imgPath||"", detail:detail
+    }));
+  }).then(function(r){
+    if(!r.ok) throw new Error(r.msg);
+    goList(); toast("✅ แจ้งซ่อมสำเร็จ! ("+docNo+")","ok"); syncBg(false);
+  }).catch(function(e){
+    toast("❌ "+e.message,"err"); setLed("ok","led1");
+  }).finally(function(){
+    resetBtn("saveAddBtn","💾 บันทึกแจ้งซ่อม");
+  });
+}
+
+// ══════════════════════════════════════════
+//  MODAL HELPERS
+// ══════════════════════════════════════════
+function closeModal(id) {
+  document.getElementById(id).classList.remove("show");
+}
+
+// ══════════════════════════════════════════
+//  YES/NO
+// ══════════════════════════════════════════
+function setYN(val){
+  ynValue=val;
+  document.getElementById("ynYes").className="yn-btn"+(val===true?" yes-on":"");
+  document.getElementById("ynNo").className ="yn-btn"+(val===false?" no-on":"");
+}
+
+// ══════════════════════════════════════════
+//  DATE HELPERS
+// ══════════════════════════════════════════
+function onDateChange(inputId, displayId){
+  var iso=document.getElementById(inputId).value;
+  if(!iso) return;
+  var p=iso.split("-");
+  var txt=p[2]+"/"+p[1]+"/"+(parseInt(p[0])+543);
+  var el=document.getElementById(displayId);
+  el.textContent=txt; el.className="dd-val";
+}
+function getDateTH(inputId){
+  var iso=document.getElementById(inputId).value;
+  if(!iso) return "";
+  var p=iso.split("-");
+  return p[2]+"/"+p[1]+"/"+(parseInt(p[0])+543);
+}
+function getTodayTH(){
+  var d=new Date();
+  return pad(d.getDate())+"/"+pad(d.getMonth()+1)+"/"+(d.getFullYear()+543);
+}
+function getTimestamp(){
+  var n=new Date();
+  return pad(n.getDate())+pad(n.getMonth()+1)+pad(n.getHours())+pad(n.getMinutes());
+}
+
+// ══════════════════════════════════════════
+//  PHOTO HANDLERS
+// ══════════════════════════════════════════
+function handlePhoto(input, mode){
+  var f=input.files[0]; if(!f) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var durl=e.target.result;
+    var parts=durl.split(",");
+    var obj={base64:parts[1],mime:parts[0].match(/:(.*?);/)[1]};
+    if(mode==="close"){
+      photoClose=obj;
+      document.getElementById("pvImg2").src=durl;
+      document.getElementById("pvWrap2").style.display="block";
+      document.getElementById("photoArea2").style.display="none";
+    } else {
+      photoAdd=obj;
+      document.getElementById("pvImg3").src=durl;
+      document.getElementById("pvWrap3").style.display="block";
+      document.getElementById("photoArea3").style.display="none";
+    }
+  };
+  reader.readAsDataURL(f);
+  input.value="";
+}
+function clearPhoto(mode){
+  if(mode==="close"){
+    photoClose=null;
+    document.getElementById("pvWrap2").style.display="none";
+    document.getElementById("photoArea2").style.display="flex";
+    document.getElementById("pvImg2").src="";
+  } else {
+    photoAdd=null;
+    document.getElementById("pvWrap3").style.display="none";
+    document.getElementById("photoArea3").style.display="flex";
+    document.getElementById("pvImg3").src="";
+  }
+}
+
+// ══════════════════════════════════════════
+//  API
+// ══════════════════════════════════════════
+function callAPI(params){
+  return fetch(API,{method:"POST",body:params})
+    .then(function(r){return r.json();})
+    .catch(function(){
+      var qs=params.toString().replace(/&?imgBase64=[^&]*/g,"");
+      return fetch(API+"?"+qs+"&_="+Date.now()).then(function(r){return r.json();});
+    });
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+function genDocNo(){
+  var chars="0123456789abcdef",result="";
+  for(var i=0;i<8;i++) result+=chars[Math.floor(Math.random()*16)];
+  return result;
+}
+function resetBtn(id,label){
+  var b=document.getElementById(id);
+  if(!b) return;
+  b.disabled=false; b.classList.remove("saving"); b.innerHTML=label;
+}
+function toast(msg,type){
+  var el=document.getElementById("toast");
+  el.textContent=msg; el.className="toast show"+(type?" "+type:"");
+  clearTimeout(el._t); el._t=setTimeout(function(){el.className="toast";},3500);
+}
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function pad(n){return n<10?"0"+n:n;}
+function setLed(state, ledId){
+  var id = ledId || "led1";
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.className="led"+(state==="syncing"?" syncing":state==="ok"?" ok":"");
+}
+function showLoading(txt){
+  document.getElementById("loadTxt").textContent = txt || "กำลังโหลด…";
+  document.getElementById("loadOverlay").classList.add("show");
+}
+function hideLoading(){
+  document.getElementById("loadOverlay").classList.remove("show");
+}
+function setOvPct(p){
+  document.getElementById("rpFill") && (document.getElementById("rpFill").style.width=p+"%");
+}
+</script>
+</body>
+</html>
