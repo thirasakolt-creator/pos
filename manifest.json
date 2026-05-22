@@ -1,8 +1,8 @@
 {
-  "name": "POS Pro — ระบบขายหน้าร้าน",
-  "short_name": "POS Pro",
-  "description": "ระบบ POS ออฟไลน์ พร้อม sync Google Sheets",
-  "start_url": "/pos/",
+  "name": "OBS Ex",
+  "short_name": "OBS Ex",
+  "description": "OBS Ex",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "Portrait",
   "background_color": "#0d0f14",
