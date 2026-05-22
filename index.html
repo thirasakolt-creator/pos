@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0f0f14" />
+  <title>OBS Scene Control</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="header">
+      <h1>OBS Scene Control</h1>
+      <p class="subtitle">ปุ่มซีนตาม OBS จริง — เสียง / วิดีโอ / สไลด์โชว์</p>
+    </header>
+
+    <section class="settings" aria-label="การตั้งค่า">
+      <label for="apiBase">ที่อยู่ Bridge</label>
+      <div class="settings-row">
+        <input id="apiBase" type="url" value="http://127.0.0.1:8765" spellcheck="false" autocomplete="off" />
+        <button type="button" id="btnTest" class="btn-secondary">ทดสอบ</button>
+      </div>
+      <label for="apiToken" class="label-token">Token (เมื่อใช้ผ่านอินเทอร์เน็ต)</label>
+      <input id="apiToken" type="password" placeholder="ว่างได้ถ้าไม่ได้ตั้งใน config" autocomplete="off" />
+      <p id="status" class="status" role="status">ยังไม่ได้เชื่อมต่อ</p>
+      <details class="lan-help">
+        <summary>เชื่อมจากอินเทอร์เน็ต (ไม่ต้องอยู่ Wi‑Fi เดียวกัน)</summary>
+        <ol>
+          <li>บน PC: รัน <code>start-server.bat</code> + <code>start-tunnel.bat</code></li>
+          <li>คัดลอก URL จาก tunnel เช่น <code>https://xxx.trycloudflare.com</code></li>
+          <li>ใส่ URL นั้นในช่อง Bridge ด้านบน (+ Token ถ้ามี)</li>
+          <li>อัปเว็บ GitHub แล้วเปิดจากมือถือที่ไหนก็ได้</li>
+        </ol>
+        <p class="lan-note">ลิงก์: <code>?bridge=https://xxx.trycloudflare.com&amp;token=รหัส</code></p>
+      </details>
+    </section>
+
+    <main class="grid" id="sceneGrid" aria-live="polite">
+      <p class="empty">กำลังโหลดซีน…</p>
+    </main>
+
+    <footer class="footer">
+      <p>จำนวนปุ่ม = จำนวนซีนใน OBS — เพิ่มซีนใน OBS แล้วรีเฟรช</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="app.js"></script>
+</body>
+</html>
