@@ -132,10 +132,10 @@ function render() {
   `).join('');
 }
 
-$('search').oninput = render;
-$('filter').onchange = render;
-$('yearFilter').onchange = loadJobs;
-$('refreshBtn').onclick = loadJobs;
+if ($('search'))     $('search').oninput      = render;
+if ($('filter'))     $('filter').onchange     = render;
+if ($('yearFilter')) $('yearFilter').onchange = () => loadJobs(false);
+if ($('refreshBtn')) $('refreshBtn').onclick  = () => loadJobs(false);
 
 /* ---------- เรียก Apps Script ---------- */
 async function callGAS(payload) {
