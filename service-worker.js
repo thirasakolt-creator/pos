@@ -1,4 +1,4 @@
-const CACHE = 'repair-v1';
+const CACHE = 'repair-v2';
 const ASSETS = ['./', './index.html', './app.js', './config.js', './manifest.json'];
 
 self.addEventListener('install', (e) => {
