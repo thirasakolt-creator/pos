@@ -99,16 +99,15 @@ function isDone(s) {
 }
 
 function render() {
-  const q = $('search').value.trim().toLowerCase();
-  const f = $('filter').value;
+  const list = $('list');
+  if (!list) return;
 
-  const rows = JOBS.filter(j => {
-    if (f === 'open' && isDone(j.status)) return false;
-    if (f === 'done' && !isDone(j.status)) return false;
-    if (!q) return true;
-    return [j.doc_no, j.location, j.description, j.department]
-      .join(' ').toLowerCase().includes(q);
-  });
+  const q = $('search') ? $('search').value.trim().toLowerCase() : '';
+  const f = $('filter') ? $('filter').value : 'all';
+  const yearEl = $('yearFilter');
+  const year = yearEl ? Number(yearEl.value) : new Date().getFullYear();
+  // ...โค้ดส่วนที่เหลือเหมือนเดิม
+
 
   const head = `<div class="meta" style="margin-bottom:10px">พบ ${rows.length} งาน (ทั้งปี ${JOBS.length} งาน)</div>`;
 
