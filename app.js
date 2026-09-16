@@ -98,6 +98,7 @@ function isDone(s) {
   return t.includes('เรียบร้อย') || t.includes('เสร็จ');
 }
 
+/* ---------- แสดงผล (แก้ไขให้ถูกต้อง) ---------- */
 function render() {
   const list = $('list');
   if (!list) return;
@@ -106,17 +107,26 @@ function render() {
   const f = $('filter') ? $('filter').value : 'all';
   const yearEl = $('yearFilter');
   const year = yearEl ? Number(yearEl.value) : new Date().getFullYear();
-  // ...โค้ดส่วนที่เหลือเหมือนเดิม
 
+  // ป้องกัน error ถ้า JOBS ยังไม่ได้โหลด
+  const dataToFilter = JOBS || [];
 
-  const head = `<div class="meta" style="margin-bottom:10px">พบ ${rows.length} งาน (ทั้งปี ${JOBS.length} งาน)</div>`;
+  const rows = dataToFilter.filter(j => {
+    if (f === 'open' && isDone(j.status)) return false;
+    if (f === 'done' && !isDone(j.status)) return false;
+    if (!q) return true;
+    return [j.doc_no, j.location, j.description, j.department]
+      .join(' ').toLowerCase().includes(q);
+  });
+
+  const head = `<div class="meta" style="margin-bottom:10px">ปี พ.ศ. ${year + 543} · พบ ${rows.length} งาน (ทั้งหมด ${dataToFilter.length} งาน)</div>`;
 
   if (!rows.length) {
-    $('list').innerHTML = head + '<div class="empty">ไม่พบงานตามเงื่อนไข</div>';
+    list.innerHTML = head + '<div class="empty">ไม่พบงานตามเงื่อนไข</div>';
     return;
   }
 
-  $('list').innerHTML = head + rows.map(j => `
+  list.innerHTML = head + rows.map(j => `
     <div class="card">
       <span class="badge">${j.status || 'ยังไม่ระบุสถานะ'}</span>
       <h3>#${j.doc_no} · ${j.location || '-'}</h3>
