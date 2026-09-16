@@ -13,7 +13,7 @@ header{position:sticky;top:0;z-index:20;background:#0f766e;color:#fff;padding:14
 header h1{font-size:17px;font-weight:700;flex:1}
 button{font-family:inherit;border:0;border-radius:10px;cursor:pointer;font-size:15px}
 .btn{background:#0f766e;color:#fff;padding:12px 16px;font-weight:600;width:100%}
-.btn-sm{background:#0f766e;color:#fff;padding:9px 14px;font-weight:600;width:auto}
+.btn-sm{background:#115e59;color:#fff;padding:9px 14px;font-weight:600;width:auto}
 .btn-ghost{background:#e2e8f0;color:#0f172a;padding:12px 16px;font-weight:600;width:100%}
 .wrap{max-width:720px;margin:0 auto;padding:16px}
 input,select,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;font-family:inherit;background:#fff}
@@ -22,7 +22,7 @@ label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:#4755
 .card h3{font-size:15px;margin-bottom:6px}
 .meta{font-size:13px;color:#64748b;line-height:1.7}
 .badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;margin-bottom:8px}
-.row{display:flex;gap:8px;align-items:center}
+.field{margin-bottom:10px}
 .hide{display:none!important}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:99;max-width:90%}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end}
@@ -31,11 +31,11 @@ label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:#4755
 .empty{text-align:center;color:#94a3b8;padding:50px 20px;font-size:14px}
 .gallery{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .thumb{width:92px;height:92px;object-fit:cover;border-radius:10px;border:1px solid #cbd5e1;background:#f8fafc}
-
 </style>
 </head>
 <body>
 
+<!-- ===== หน้า Login ===== -->
 <div id="loginView" class="wrap">
   <div style="text-align:center;margin:60px 0 24px">
     <div style="font-size:44px">🔧</div>
@@ -51,33 +51,41 @@ label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:#4755
   </div>
 </div>
 
+<!-- ===== หน้าหลัก ===== -->
 <div id="appView" class="hide">
   <header>
     <h1>งานซ่อม</h1>
     <button class="btn-sm" id="refreshBtn">รีเฟรช</button>
-    <button class="btn-sm" id="logoutBtn" style="background:#115e59">ออก</button>
+    <button class="btn-sm" id="logoutBtn">ออก</button>
   </header>
+
   <div class="wrap">
-    <div class="row" style="margin-bottom:12px">
+    <div class="field">
       <input id="search" placeholder="ค้นหาเลขงาน / สถานที่ / อาการ">
     </div>
-    <div class="row" style="margin-bottom:14px">
-    <div class="row" style="margin-bottom:10px">
-  <select id="yearFilter"></select>
-</div>
+
+    <div class="field">
+      <select id="yearFilter"></select>
+    </div>
+
+    <div class="field">
+      <select id="filter">
         <option value="open">งานค้าง</option>
         <option value="all">ทั้งหมด</option>
         <option value="done">เสร็จแล้ว</option>
       </select>
     </div>
+
     <div id="list"></div>
   </div>
 </div>
 
+<!-- ===== Modal อัปเดตงาน ===== -->
 <div id="modal" class="modal hide">
   <div class="sheet">
-    <h2 id="mTitle">ปิดงาน</h2>
+    <h2 id="mTitle">อัปเดตงาน</h2>
     <p class="meta" id="mSub"></p>
+
     <label>สถานะ</label>
     <select id="mStatus">
       <option>ดำเนินการเรียบร้อย</option>
@@ -85,18 +93,23 @@ label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:#4755
       <option>รออะไหล่</option>
       <option>ติดต่อช่างนอก</option>
     </select>
+
     <label>วันที่เสร็จ</label>
     <input id="mDate" type="date">
+
     <label>ผู้ซ่อมหลัก</label>
     <input id="mTech" placeholder="ชื่อช่าง">
-    <label>รูปภาพที่มีอยู่ (จาก Drive)</label>
-<div id="driveImages" class="gallery"></div>
 
-<label>เพิ่มรูปหลังซ่อม</label>
-<input id="photoInput" type="file" accept="image/*" multiple capture="environment">
-<div id="preview" class="gallery"></div>
+    <label>รูปภาพที่มีอยู่ (จาก Drive)</label>
+    <div id="driveImages" class="gallery"></div>
+
+    <label>เพิ่มรูปหลังซ่อม</label>
+    <input id="photoInput" type="file" accept="image/*" multiple capture="environment">
+    <div id="preview" class="gallery"></div>
+
     <label>คำแนะนำในการดูแล</label>
     <textarea id="mNote" rows="3" placeholder="ไม่บังคับ"></textarea>
+
     <div style="height:18px"></div>
     <button class="btn" id="mSave">บันทึก</button>
     <div style="height:8px"></div>
