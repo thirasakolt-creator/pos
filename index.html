@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>ระบบแจ้งซ่อม</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"Sarabun",system-ui,-apple-system,sans-serif;background:#f1f5f9;color:#0f172a;padding-bottom:80px}
+header{position:sticky;top:0;z-index:20;background:#0f766e;color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+header h1{font-size:17px;font-weight:700;flex:1}
+button{font-family:inherit;border:0;border-radius:10px;cursor:pointer;font-size:15px}
+.btn{background:#0f766e;color:#fff;padding:12px 16px;font-weight:600;width:100%}
+.btn-sm{background:#0f766e;color:#fff;padding:9px 14px;font-weight:600;width:auto}
+.btn-ghost{background:#e2e8f0;color:#0f172a;padding:12px 16px;font-weight:600;width:100%}
+.wrap{max-width:720px;margin:0 auto;padding:16px}
+input,select,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px;font-family:inherit;background:#fff}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px;color:#475569}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.card h3{font-size:15px;margin-bottom:6px}
+.meta{font-size:13px;color:#64748b;line-height:1.7}
+.badge{display:inline-block;font-size:11px;padding:3px 9px;border-radius:999px;background:#fef3c7;color:#92400e;font-weight:600;margin-bottom:8px}
+.row{display:flex;gap:8px;align-items:center}
+.hide{display:none!important}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#0f172a;color:#fff;padding:12px 20px;border-radius:10px;font-size:14px;z-index:99;max-width:90%}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end}
+.sheet{background:#fff;width:100%;max-height:92vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px}
+.sheet h2{font-size:17px;margin-bottom:4px}
+.empty{text-align:center;color:#94a3b8;padding:50px 20px;font-size:14px}
+</style>
+</head>
+<body>
+
+<div id="loginView" class="wrap">
+  <div style="text-align:center;margin:60px 0 24px">
+    <div style="font-size:44px">🔧</div>
+    <h1 style="font-size:21px;margin-top:8px">ระบบแจ้งซ่อม</h1>
+  </div>
+  <div class="card">
+    <label>อีเมล</label>
+    <input id="email" type="email" autocomplete="username" placeholder="tech@company.com">
+    <label>รหัสผ่าน</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div style="height:18px"></div>
+    <button class="btn" id="loginBtn">เข้าสู่ระบบ</button>
+  </div>
+</div>
+
+<div id="appView" class="hide">
+  <header>
+    <h1>งานซ่อม</h1>
+    <button class="btn-sm" id="refreshBtn">รีเฟรช</button>
+    <button class="btn-sm" id="logoutBtn" style="background:#115e59">ออก</button>
+  </header>
+  <div class="wrap">
+    <div class="row" style="margin-bottom:12px">
+      <input id="search" placeholder="ค้นหาเลขงาน / สถานที่ / อาการ">
+    </div>
+    <div class="row" style="margin-bottom:14px">
+      <select id="filter">
+        <option value="open">งานค้าง</option>
+        <option value="all">ทั้งหมด</option>
+        <option value="done">เสร็จแล้ว</option>
+      </select>
+    </div>
+    <div id="list"></div>
+  </div>
+</div>
+
+<div id="modal" class="modal hide">
+  <div class="sheet">
+    <h2 id="mTitle">ปิดงาน</h2>
+    <p class="meta" id="mSub"></p>
+    <label>สถานะ</label>
+    <select id="mStatus">
+      <option>ดำเนินการเรียบร้อย</option>
+      <option>กำลังดำเนินการ</option>
+      <option>รออะไหล่</option>
+      <option>ติดต่อช่างนอก</option>
+    </select>
+    <label>วันที่เสร็จ</label>
+    <input id="mDate" type="date">
+    <label>ผู้ซ่อมหลัก</label>
+    <input id="mTech" placeholder="ชื่อช่าง">
+    <label>คำแนะนำในการดูแล</label>
+    <textarea id="mNote" rows="3" placeholder="ไม่บังคับ"></textarea>
+    <div style="height:18px"></div>
+    <button class="btn" id="mSave">บันทึก</button>
+    <div style="height:8px"></div>
+    <button class="btn-ghost" id="mCancel">ยกเลิก</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script src="./app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js');
+}
+</script>
+</body>
+</html>
