@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แจ้งซ่อม</title>
+<link rel="manifest" href="report-manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary: #0f766e; --primary-dark: #0d5c56; --bg: #f4f6f7; --card: #ffffff;
+    --text: #1f2937; --muted: #6b7280; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Sarabun',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header.topbar { background:var(--primary); color:#fff; padding:16px; text-align:center; }
+  header.topbar h2 { margin:0; font-size:18px; }
+  header.topbar p { margin:4px 0 0; font-size:13px; opacity:0.9; }
+  main { padding:16px; max-width:480px; margin:0 auto 40px; }
+  .form-card { background:var(--card); border-radius:14px; padding:16px; }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  input, select, textarea {
+    width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px;
+    font-size:15px; margin-bottom:14px; font-family:inherit;
+  }
+  textarea { resize:vertical; min-height:80px; }
+  .toggle-group { display:flex; gap:8px; margin-bottom:14px; }
+  .toggle-btn { flex:1; padding:11px; border-radius:10px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:14px; text-align:center; }
+  .toggle-btn.selected { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .photo-box {
+    border:2px dashed var(--border); border-radius:12px; padding:24px; text-align:center;
+    color:var(--muted); font-size:13px; margin-bottom:14px; cursor:pointer;
+  }
+  .photo-box img { max-width:100%; max-height:200px; border-radius:8px; }
+  .btn-primary {
+    width:100%; padding:14px; border:none; border-radius:10px; background:var(--primary);
+    color:#fff; font-size:16px; font-weight:600; cursor:pointer;
+  }
+  .btn-primary:disabled { background:#9ca3af; }
+  .success-box { text-align:center; padding:50px 20px; display:none; }
+  .success-box .check { font-size:56px; }
+  .success-box h3 { margin:12px 0 6px; color:var(--primary-dark); }
+  .success-box p { color:var(--muted); font-size:14px; margin-bottom:24px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h2>แจ้งซ่อม</h2>
+  <p>โรงแรมมณีจันทร์</p>
+</header>
+
+<main>
+  <div id="form-wrap">
+    <div class="form-card">
+      <label>แผนกที่แจ้ง</label>
+      <select id="f-department"></select>
+
+      <label>คนที่แจ้ง</label>
+      <input type="text" id="f-reporter" placeholder="ชื่อผู้แจ้ง">
+
+      <label>สถานที่ซ่อม</label>
+      <input type="text" id="f-location" placeholder="เช่น ห้อง 203, ล็อบบี้">
+
+      <label>ภายใน 3 เดือนที่ผ่านมา จุดนี้เคยแจ้งซ่อมมาแล้ว?</label>
+      <div class="toggle-group">
+        <div class="toggle-btn selected" data-val="false" onclick="selectToggle(this)">No</div>
+        <div class="toggle-btn" data-val="true" onclick="selectToggle(this)">Yes</div>
+      </div>
+
+      <label>ประเภทปัญหา</label>
+      <select id="f-problemtype"></select>
+
+      <label>รูปภาพ (ถ้ามี)</label>
+      <div class="photo-box" id="photo-box" onclick="document.getElementById('f-photo').click()">
+        📷 แตะเพื่อถ่าย/เลือกรูป
+      </div>
+      <input type="file" id="f-photo" accept="image/*" style="display:none">
+
+      <label>รายละเอียดปัญหา *</label>
+      <textarea id="f-detail" placeholder="อธิบายปัญหาที่พบ"></textarea>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="submitReport()" style="margin-top:14px;">
+      ส่งแจ้งซ่อม
+    </button>
+  </div>
+
+  <div class="success-box" id="success-box">
+    <div class="check">✅</div>
+    <h3>แจ้งซ่อมเรียบร้อยแล้ว</h3>
+    <p>ทีมช่างจะดำเนินการโดยเร็วที่สุด</p>
+    <button class="btn-primary" onclick="resetAndShowForm()">แจ้งซ่อมรายการใหม่</button>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // ใช้ค่าเดียวกับ index.html / tickets.html
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let recurringValue = false;
+
+  (async () => {
+    const { data: depts } = await sb.from('departments').select('code, name').order('code');
+    document.getElementById('f-department').innerHTML =
+      (depts || []).map(d => `<option value="${d.code}">${d.code}${d.name ? ' - ' + d.name : ''}</option>`).join('');
+
+    const { data: types } = await sb.from('problem_types').select('id, name').order('name');
+    document.getElementById('f-problemtype').innerHTML =
+      (types || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+  })();
+
+  function selectToggle(el) {
+    el.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    recurringValue = el.dataset.val === 'true';
+  }
+
+  document.getElementById('f-photo').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const box = document.getElementById('photo-box');
+    const reader = new FileReader();
+    reader.onload = () => { box.innerHTML = `<img src="${reader.result}">`; };
+    reader.readAsDataURL(file);
+  });
+
+  function compressImage(file, maxWidth = 1280, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) { height = Math.round(height * (maxWidth / width)); width = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = width; canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob((blob) => resolve(new File([blob], file.name, { type: 'image/jpeg' })), 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadPhoto(file) {
+    const compressed = await compressImage(file);
+    const path = `tickets/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const { error } = await sb.storage.from('repair-photos').upload(path, compressed, { contentType: 'image/jpeg' });
+    if (error) throw new Error(error.message);
+    const { data } = sb.storage.from('repair-photos').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  function genDocNo() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  async function submitReport() {
+    const detail = document.getElementById('f-detail').value.trim();
+    if (!detail) { alert('กรุณากรอกรายละเอียดปัญหา'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+    try {
+      let photoUrl = null;
+      const fileInput = document.getElementById('f-photo');
+      if (fileInput.files[0]) {
+        btn.textContent = 'กำลังอัพโหลดรูป...';
+        photoUrl = await uploadPhoto(fileInput.files[0]);
+      }
+
+      const payload = {
+        doc_no: genDocNo(),
+        reported_date: new Date().toISOString().slice(0, 10),
+        department: document.getElementById('f-department').value,
+        reporter_name: document.getElementById('f-reporter').value.trim(),
+        repair_location: document.getElementById('f-location').value.trim(),
+        found_by: 'พนักงาน',
+        recurring_3months: recurringValue,
+        problem_type: document.getElementById('f-problemtype').value || null,
+        photo_before_url: photoUrl,
+        problem_detail: detail,
+        progress: 'รับทราบ',
+        created_by_source: 'web'
+      };
+
+      const { error } = await sb.from('repair_tickets').insert(payload);
+      if (error) throw error;
+
+      document.getElementById('form-wrap').style.display = 'none';
+      document.getElementById('success-box').style.display = 'block';
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'ส่งแจ้งซ่อม';
+    }
+  }
+
+  function resetAndShowForm() {
+    document.getElementById('f-department').selectedIndex = 0;
+    document.getElementById('f-reporter').value = '';
+    document.getElementById('f-location').value = '';
+    document.getElementById('f-problemtype').selectedIndex = 0;
+    document.getElementById('f-detail').value = '';
+    document.getElementById('f-photo').value = '';
+    document.getElementById('photo-box').innerHTML = '📷 แตะเพื่อถ่าย/เลือกรูป';
+    recurringValue = false;
+    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+    document.querySelector('.toggle-btn[data-val="false"]').classList.add('selected');
+
+    document.getElementById('success-box').style.display = 'none';
+    document.getElementById('form-wrap').style.display = 'block';
+  }
+</script>
+</body>
+</html>

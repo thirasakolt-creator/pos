@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>งานแจ้งซ่อม</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary: #0f766e;
+    --primary-dark: #0d5c56;
+    --bg: #f4f6f7;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --danger: #dc2626;
+    --border: #e5e7eb;
+    --warn-bg: #fef3c7;
+    --warn-text: #92400e;
+    --ok-bg: #d1fae5;
+    --ok-text: #065f46;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:'Sarabun',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header.topbar {
+    background: var(--primary); color:#fff; padding:14px 16px;
+    display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10;
+  }
+  header.topbar button.back { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:0; }
+  header.topbar h2 { margin:0; font-size:17px; flex:1; }
+  main { padding:14px; max-width:640px; margin:0 auto 80px; }
+
+  /* --- list --- */
+  .tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .tab { flex:1; text-align:center; padding:10px; border-radius:10px; background:var(--card); font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); }
+  .tab.active { background:var(--primary); color:#fff; }
+  .ticket-card {
+    background:var(--card); border-radius:14px; padding:12px; margin-bottom:10px;
+    display:flex; gap:12px; box-shadow:0 1px 3px rgba(0,0,0,0.06); cursor:pointer;
+  }
+  .ticket-card img { width:64px; height:64px; object-fit:cover; border-radius:10px; background:#eee; flex-shrink:0; }
+  .ticket-card .ph-placeholder { width:64px; height:64px; border-radius:10px; background:#eee; flex-shrink:0; }
+  .ticket-info { flex:1; min-width:0; }
+  .ticket-info .dept { font-weight:700; font-size:14px; }
+  .ticket-info .detail { font-size:13px; color:var(--muted); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .badge { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; margin-top:6px; }
+  .badge.warn { background:var(--warn-bg); color:var(--warn-text); }
+  .badge.ok { background:var(--ok-bg); color:var(--ok-text); }
+  .badge.muted { background:#e5e7eb; color:var(--muted); }
+  .fab {
+    position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%;
+    background:var(--primary); color:#fff; font-size:28px; border:none; box-shadow:0 4px 12px rgba(0,0,0,0.2);
+    cursor:pointer;
+  }
+  .empty { text-align:center; color:var(--muted); padding:60px 20px; font-size:14px; }
+
+  /* --- form --- */
+  .form-card { background:var(--card); border-radius:14px; padding:16px; margin-bottom:12px; }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  input, select, textarea {
+    width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px;
+    font-size:15px; margin-bottom:14px; font-family:inherit;
+  }
+  textarea { resize:vertical; min-height:70px; }
+  .toggle-group { display:flex; gap:8px; margin-bottom:14px; }
+  .toggle-btn { flex:1; padding:11px; border-radius:10px; border:1px solid var(--border); background:#fff; cursor:pointer; font-size:14px; }
+  .toggle-btn.selected { background:var(--primary); color:#fff; border-color:var(--primary); }
+  .photo-box {
+    border:2px dashed var(--border); border-radius:12px; padding:20px; text-align:center;
+    color:var(--muted); font-size:13px; margin-bottom:14px; position:relative; cursor:pointer;
+  }
+  .photo-box img { max-width:100%; max-height:180px; border-radius:8px; }
+  .rating-group { display:flex; gap:6px; margin-bottom:14px; }
+  .rating-btn { flex:1; padding:10px; border-radius:10px; border:1px solid var(--border); background:#fff; cursor:pointer; }
+  .rating-btn.selected { background:#f59e0b; color:#fff; border-color:#f59e0b; }
+  .btn-primary {
+    width:100%; padding:13px; border:none; border-radius:10px; background:var(--primary);
+    color:#fff; font-size:16px; font-weight:600; cursor:pointer; margin-top:6px;
+  }
+  .btn-secondary {
+    width:100%; padding:13px; border:1px solid var(--border); border-radius:10px; background:#fff;
+    color:var(--text); font-size:15px; font-weight:600; cursor:pointer; margin-top:8px;
+  }
+  .btn-danger { background:var(--danger); }
+  .section-title { font-size:14px; font-weight:700; margin:18px 0 8px; color:var(--primary-dark); }
+  .loading, .err { text-align:center; padding:30px; color:var(--muted); font-size:14px; }
+  .err { color:var(--danger); }
+  #screen-list, #screen-form, #screen-detail { display:none; }
+</style>
+</head>
+<body>
+
+<!-- ============ LIST SCREEN ============ -->
+<div id="screen-list">
+  <header class="topbar">
+    <button class="back" onclick="location.href='index.html'">←</button>
+    <h2>งานแจ้งซ่อม</h2>
+  </header>
+  <main>
+    <div class="tabs">
+      <div class="tab active" data-tab="pending">งานค้าง</div>
+      <div class="tab" data-tab="external">งานช่างนอก</div>
+      <div class="tab" data-tab="all">ทั้งหมด</div>
+    </div>
+    <div id="ticket-list"><div class="loading">กำลังโหลด...</div></div>
+  </main>
+  <button class="fab" onclick="showForm()">+</button>
+</div>
+
+<!-- ============ ADD FORM SCREEN ============ -->
+<div id="screen-form">
+  <header class="topbar">
+    <button class="back" onclick="showList()">←</button>
+    <h2>แจ้งซ่อมใหม่</h2>
+  </header>
+  <main>
+    <div class="form-card">
+      <label>แผนกที่แจ้ง</label>
+      <select id="f-department"></select>
+
+      <label>คนที่แจ้ง</label>
+      <input type="text" id="f-reporter">
+
+      <label>สถานที่ซ่อม</label>
+      <input type="text" id="f-location">
+
+      <label>คนเจอปัญหา</label>
+      <input type="text" id="f-foundby" value="พนักงาน">
+
+      <label>ภายใน 3 เดือนที่ผ่านมา จุดนี้เคยแจ้งซ่อมมาแล้ว?</label>
+      <div class="toggle-group">
+        <div class="toggle-btn selected" data-val="false" onclick="selectToggle(this,'recurring')">No</div>
+        <div class="toggle-btn" data-val="true" onclick="selectToggle(this,'recurring')">Yes</div>
+      </div>
+
+      <label>ประเภทปัญหา</label>
+      <select id="f-problemtype"></select>
+
+      <label>รูปภาพ (ก่อนซ่อม)</label>
+      <div class="photo-box" id="f-photo-before-box" onclick="document.getElementById('f-photo-before').click()">
+        📷 แตะเพื่อถ่าย/เลือกรูป
+      </div>
+      <input type="file" id="f-photo-before" accept="image/*" style="display:none">
+
+      <label>รายละเอียดปัญหา *</label>
+      <textarea id="f-detail"></textarea>
+    </div>
+
+    <button class="btn-primary" id="submit-btn" onclick="submitTicket()">บันทึกแจ้งซ่อม</button>
+  </main>
+</div>
+
+<!-- ============ DETAIL / EDIT SCREEN ============ -->
+<div id="screen-detail">
+  <header class="topbar">
+    <button class="back" onclick="showList()">←</button>
+    <h2 id="detail-docno">-</h2>
+  </header>
+  <main id="detail-body"></main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let myUserId = null;
+  let myRole = null;
+  let technicians = [];
+  let currentTab = 'pending';
+  let recurringValue = false;
+
+  // --- guard: ต้อง login ก่อน ---
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'index.html'; return; }
+    const { data: me } = await sb.from('users').select('id, role').eq('email', session.user.email).single();
+    if (!me) { location.href = 'index.html'; return; }
+    myUserId = me.id;
+    myRole = me.role;
+    await loadLookups();
+    await loadTickets();
+  })();
+
+  async function loadLookups() {
+    const { data: depts } = await sb.from('departments').select('code, name').order('code');
+    const deptSelect = document.getElementById('f-department');
+    deptSelect.innerHTML = (depts || []).map(d => `<option value="${d.code}">${d.code}${d.name ? ' - ' + d.name : ''}</option>`).join('');
+
+    const { data: types } = await sb.from('problem_types').select('id, name').order('name');
+    const typeSelect = document.getElementById('f-problemtype');
+    typeSelect.innerHTML = (types || []).map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+
+    const { data: techs } = await sb.from('users').select('id, name').eq('role', 'technician').eq('active', true);
+    technicians = techs || [];
+  }
+
+  // --- tabs ---
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      currentTab = tab.dataset.tab;
+      loadTickets();
+    });
+  });
+
+  function statusBadge(progress) {
+    if (progress === 'ดำเนินการเรียบร้อย') return `<span class="badge ok">${progress}</span>`;
+    if (!progress) return `<span class="badge muted">ยังไม่อัพเดท</span>`;
+    return `<span class="badge warn">${progress}</span>`;
+  }
+
+  async function loadTickets() {
+    const listEl = document.getElementById('ticket-list');
+    listEl.innerHTML = '<div class="loading">กำลังโหลด...</div>';
+
+    let query = sb.from('repair_tickets').select('*').order('created_at', { ascending: false });
+
+    if (currentTab === 'pending') {
+      query = query.or('progress.eq.รับทราบ,progress.eq.รอจัดซื้ออุปกรณ์,progress.is.null');
+    } else if (currentTab === 'external') {
+      query = query.eq('progress', 'ติดต่อช่างนอก');
+    }
+
+    const { data, error } = await query;
+    if (error) { listEl.innerHTML = `<div class="err">โหลดข้อมูลไม่สำเร็จ: ${error.message}</div>`; return; }
+
+    if (!data || data.length === 0) {
+      listEl.innerHTML = '<div class="empty">ไม่มีงานในหมวดนี้</div>';
+      return;
+    }
+
+    listEl.innerHTML = data.map(t => `
+      <div class="ticket-card" onclick="openDetail(${t.id})">
+        ${t.photo_before_url
+          ? `<img src="${t.photo_before_url}" alt="">`
+          : `<div class="ph-placeholder"></div>`}
+        <div class="ticket-info">
+          <div class="dept">${t.department || '-'}</div>
+          <div class="detail">${t.problem_detail || ''}</div>
+          ${statusBadge(t.progress)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // --- screen switching ---
+  function showList() {
+    document.getElementById('screen-form').style.display = 'none';
+    document.getElementById('screen-detail').style.display = 'none';
+    document.getElementById('screen-list').style.display = 'block';
+    loadTickets();
+  }
+  function showForm() {
+    resetTicketForm();
+    document.getElementById('screen-list').style.display = 'none';
+    document.getElementById('screen-form').style.display = 'block';
+  }
+
+  function resetTicketForm() {
+    document.getElementById('f-department').selectedIndex = 0;
+    document.getElementById('f-reporter').value = '';
+    document.getElementById('f-location').value = '';
+    document.getElementById('f-foundby').value = 'พนักงาน';
+    document.getElementById('f-problemtype').selectedIndex = 0;
+    document.getElementById('f-detail').value = '';
+    document.getElementById('f-photo-before').value = '';
+    document.getElementById('f-photo-before-box').innerHTML = '📷 แตะเพื่อถ่าย/เลือกรูป';
+    recurringValue = false;
+    const group = document.querySelector('#screen-form .toggle-group');
+    group.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+    group.querySelector('.toggle-btn[data-val="false"]').classList.add('selected');
+  }
+
+  function selectToggle(el, field) {
+    el.parentElement.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    if (field === 'recurring') recurringValue = el.dataset.val === 'true';
+  }
+
+  // ย่อขนาดรูปก่อนอัพโหลด (max 1280px, คุณภาพ 70%) ลดขนาดไฟล์ลงมาก
+  // ทำให้อัพโหลดเร็วขึ้นและโหลดแสดงผลในลิสต์เร็วขึ้นตามไปด้วย
+  function compressImage(file, maxWidth = 1280, quality = 0.7) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const reader = new FileReader();
+      reader.onload = (e) => { img.src = e.target.result; };
+      reader.onerror = reject;
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = Math.round(height * (maxWidth / width));
+          width = maxWidth;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => resolve(new File([blob], file.name, { type: 'image/jpeg' })),
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadPhoto(file) {
+    const compressed = await compressImage(file);
+    const path = `tickets/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
+
+    const { error: uploadError } = await sb.storage
+      .from('repair-photos')
+      .upload(path, compressed, { contentType: 'image/jpeg' });
+
+    if (uploadError) throw new Error(uploadError.message);
+
+    const { data } = sb.storage.from('repair-photos').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
+  document.getElementById('f-photo-before').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const box = document.getElementById('f-photo-before-box');
+    const reader = new FileReader();
+    reader.onload = () => { box.innerHTML = `<img src="${reader.result}">`; };
+    reader.readAsDataURL(file);
+  });
+
+  function genDocNo() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  async function submitTicket() {
+    const detail = document.getElementById('f-detail').value.trim();
+    if (!detail) { alert('กรุณากรอกรายละเอียดปัญหา'); return; }
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+    try {
+      let photoUrl = null;
+      const fileInput = document.getElementById('f-photo-before');
+      if (fileInput.files[0]) {
+        btn.textContent = 'กำลังอัพโหลดรูป...';
+        photoUrl = await uploadPhoto(fileInput.files[0]);
+      }
+
+      const payload = {
+        doc_no: genDocNo(),
+        reported_date: new Date().toISOString().slice(0, 10),
+        department: document.getElementById('f-department').value,
+        reporter_name: document.getElementById('f-reporter').value.trim(),
+        repair_location: document.getElementById('f-location').value.trim(),
+        found_by: document.getElementById('f-foundby').value.trim(),
+        recurring_3months: recurringValue,
+        problem_type: document.getElementById('f-problemtype').value || null,
+        photo_before_url: photoUrl,
+        problem_detail: detail,
+        progress: 'รับทราบ',
+        created_by_source: 'web'
+      };
+
+      const { error } = await sb.from('repair_tickets').insert(payload);
+      if (error) throw error;
+
+      alert('บันทึกแจ้งซ่อมเรียบร้อย');
+      showList();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'บันทึกแจ้งซ่อม';
+    }
+  }
+
+  // --- detail / edit screen ---
+  let currentTicket = null;
+
+  async function openDetail(id) {
+    const { data, error } = await sb.from('repair_tickets').select('*').eq('id', id).single();
+    if (error) { alert('โหลดข้อมูลไม่สำเร็จ'); return; }
+    currentTicket = data;
+    renderDetail();
+    document.getElementById('screen-list').style.display = 'none';
+    document.getElementById('screen-detail').style.display = 'block';
+  }
+
+  const PROGRESS_OPTIONS = ['รับทราบ', 'รอจัดซื้ออุปกรณ์', 'ดำเนินการเรียบร้อย', 'ยกเลิกแจ้งซ่อม', 'ติดต่อช่างนอก'];
+
+  function techOptions(selectedId) {
+    return `<option value="">-- ไม่ระบุ --</option>` + technicians.map(t =>
+      `<option value="${t.id}" ${t.id === selectedId ? 'selected' : ''}>${t.name}</option>`
+    ).join('');
+  }
+
+  function renderDetail() {
+    const t = currentTicket;
+    document.getElementById('detail-docno').textContent = t.doc_no;
+
+    document.getElementById('detail-body').innerHTML = `
+      <div class="form-card">
+        <label>วันที่แจ้ง / แผนก</label>
+        <div style="margin-bottom:14px;">${t.reported_date || '-'} • ${t.department || '-'}</div>
+
+        <label>สถานที่ซ่อม</label>
+        <div style="margin-bottom:14px;">${t.repair_location || '-'}</div>
+
+        <label>รายละเอียดปัญหา</label>
+        <div style="margin-bottom:14px;">${t.problem_detail || '-'}</div>
+
+        <label>รูปก่อนซ่อม</label>
+        <div class="photo-box" style="cursor:default;">
+          ${t.photo_before_url ? `<img src="${t.photo_before_url}">` : 'ไม่มีรูป'}
+        </div>
+      </div>
+
+      <div class="section-title">อัพเดทงาน</div>
+      <div class="form-card">
+        <label>สถานะ</label>
+        <select id="d-progress">
+          ${PROGRESS_OPTIONS.map(p => `<option value="${p}" ${p === t.progress ? 'selected' : ''}>${p}</option>`).join('')}
+        </select>
+
+        <label>รูปหลังซ่อม</label>
+        <div class="photo-box" id="d-photo-after-box" onclick="document.getElementById('d-photo-after').click()">
+          ${t.photo_after_url ? `<img src="${t.photo_after_url}">` : '📷 แตะเพื่อถ่าย/เลือกรูป'}
+        </div>
+        <input type="file" id="d-photo-after" accept="image/*" style="display:none">
+
+        <label>วันที่เสร็จ</label>
+        <input type="date" id="d-completed" value="${t.completed_date || ''}">
+
+        <label>งบประมาณ</label>
+        <input type="number" id="d-budget" value="${t.budget || 0}">
+
+        <label>คำแนะนำในการดูแลจากช่าง</label>
+        <textarea id="d-carenote">${t.care_note || ''}</textarea>
+
+        <label>ผู้ซ่อมหลัก</label>
+        <select id="d-main">${techOptions(t.main_technician)}</select>
+
+        <label>ผู้ช่วยคนที่ 1</label>
+        <select id="d-a1">${techOptions(t.assistant_1)}</select>
+
+        <label>ผู้ช่วยคนที่ 2</label>
+        <select id="d-a2">${techOptions(t.assistant_2)}</select>
+
+        <label>ผู้ช่วยคนที่ 3</label>
+        <select id="d-a3">${techOptions(t.assistant_3)}</select>
+
+        <label>คะแนนหลังการซ่อม (โดยหัวหน้าช่าง)</label>
+        <div class="rating-group">
+          ${[1,2,3,4,5].map(n => `<div class="rating-btn ${t.rating===n?'selected':''}" data-n="${n}" onclick="selectRating(this)">${n}</div>`).join('')}
+        </div>
+
+        <label>ผู้ตรวจ</label>
+        <input type="text" id="d-inspector" value="${t.inspector || ''}">
+      </div>
+
+      <button class="btn-primary" id="save-btn" onclick="saveDetail()">บันทึก</button>
+      <button class="btn-primary btn-danger" onclick="closeTicket()">ปิดงานซ่อม</button>
+    `;
+
+    document.getElementById('d-photo-after').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const box = document.getElementById('d-photo-after-box');
+      const reader = new FileReader();
+      reader.onload = () => { box.innerHTML = `<img src="${reader.result}">`; };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  let selectedRating = null;
+  function selectRating(el) {
+    el.parentElement.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedRating = parseInt(el.dataset.n);
+  }
+
+  async function buildUpdatePayload() {
+    const payload = {
+      progress: document.getElementById('d-progress').value,
+      completed_date: document.getElementById('d-completed').value || null,
+      budget: parseFloat(document.getElementById('d-budget').value) || 0,
+      care_note: document.getElementById('d-carenote').value.trim(),
+      main_technician: document.getElementById('d-main').value || null,
+      assistant_1: document.getElementById('d-a1').value || null,
+      assistant_2: document.getElementById('d-a2').value || null,
+      assistant_3: document.getElementById('d-a3').value || null,
+      inspector: document.getElementById('d-inspector').value.trim(),
+    };
+    if (selectedRating) payload.rating = selectedRating;
+
+    const afterInput = document.getElementById('d-photo-after');
+    if (afterInput.files[0]) {
+      payload.photo_after_url = await uploadPhoto(afterInput.files[0]);
+    }
+    return payload;
+  }
+
+  async function saveDetail() {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+    try {
+      const payload = await buildUpdatePayload();
+      const { error } = await sb.from('repair_tickets').update(payload).eq('id', currentTicket.id);
+      if (error) throw error;
+      alert('บันทึกเรียบร้อย');
+      showList();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'บันทึก';
+    }
+  }
+
+  async function closeTicket() {
+    if (!confirm('ยืนยันปิดงานซ่อมนี้?')) return;
+    try {
+      const payload = await buildUpdatePayload();
+      payload.progress = 'ดำเนินการเรียบร้อย';
+      if (!payload.completed_date) payload.completed_date = new Date().toISOString().slice(0, 10);
+      const { error } = await sb.from('repair_tickets').update(payload).eq('id', currentTicket.id);
+      if (error) throw error;
+      alert('ปิดงานซ่อมเรียบร้อย');
+      showList();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+  }
+
+  document.getElementById('screen-list').style.display = 'block';
+</script>
+</body>
+</html>
