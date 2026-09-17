@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบแจ้งซ่อม - มณีจันทร์</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary: #0f766e;
+    --primary-dark: #0d5c56;
+    --bg: #f4f6f7;
+    --card: #ffffff;
+    --text: #1f2937;
+    --muted: #6b7280;
+    --danger: #dc2626;
+    --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Sarabun', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  #login-screen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .login-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  .login-card h1 {
+    font-size: 20px;
+    margin: 0 0 4px;
+    color: var(--primary-dark);
+  }
+  .login-card p.sub {
+    margin: 0 0 24px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  label {
+    display: block;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  input:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+  button {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 10px;
+    background: var(--primary);
+    color: white;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:active { background: var(--primary-dark); }
+  button:disabled { background: #9ca3af; cursor: not-allowed; }
+  #error-msg {
+    color: var(--danger);
+    font-size: 14px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  #app-screen { display: none; min-height: 100vh; }
+  header.topbar {
+    background: var(--primary);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  header.topbar .who { font-size: 14px; opacity: 0.9; }
+  header.topbar h2 { margin: 0; font-size: 17px; }
+  header.topbar button.logout {
+    width: auto;
+    background: rgba(255,255,255,0.15);
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  main { padding: 16px; max-width: 640px; margin: 0 auto; }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .menu-item {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 20px 14px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .menu-item .icon { font-size: 28px; margin-bottom: 8px; display: block; }
+  .role-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .loading { text-align: center; padding: 40px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <div class="login-card">
+    <h1>ระบบแจ้งซ่อม</h1>
+    <p class="sub">โรงแรมมณีจันทร์</p>
+    <div id="error-msg"></div>
+    <form id="login-form">
+      <label for="email">อีเมล</label>
+      <input type="email" id="email" required autocomplete="username">
+      <label for="password">รหัสผ่าน</label>
+      <input type="password" id="password" required autocomplete="current-password">
+      <button type="submit" id="login-btn">เข้าสู่ระบบ</button>
+    </form>
+  </div>
+</div>
+
+<div id="app-screen">
+  <header class="topbar">
+    <div>
+      <h2 id="user-name">-</h2>
+      <span class="role-badge" id="user-role">-</span>
+    </div>
+    <button class="logout" id="logout-btn">ออกจากระบบ</button>
+  </header>
+  <main>
+    <div id="menu-container" class="menu-grid"></div>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  // ตั้งค่า Supabase project ของคุณตรงนี้
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const loginScreen = document.getElementById('login-screen');
+  const appScreen = document.getElementById('app-screen');
+  const errorMsg = document.getElementById('error-msg');
+  const loginForm = document.getElementById('login-form');
+  const loginBtn = document.getElementById('login-btn');
+
+  // เมนูตาม role
+  const MENUS = {
+    admin: [
+      { icon: '📋', label: 'งานแจ้งซ่อมทั้งหมด', href: 'tickets.html' },
+      { icon: '👥', label: 'จัดการผู้ใช้งาน' },
+      { icon: '🏢', label: 'จัดการแผนก' },
+      { icon: '🔧', label: 'จัดการประเภทปัญหา' },
+      { icon: '📊', label: 'รายงาน KPI' },
+    ],
+    supervisor: [
+      { icon: '📋', label: 'งานแจ้งซ่อมทั้งหมด', href: 'tickets.html' },
+      { icon: '🧑‍🔧', label: 'มอบหมายงาน' },
+      { icon: '👥', label: 'เพิ่มผู้ใช้งาน' },
+      { icon: '📊', label: 'รายงาน KPI' },
+    ],
+    technician: [
+      { icon: '🛠️', label: 'งานของฉัน', href: 'tickets.html' },
+      { icon: '💧', label: 'บันทึกประจำกะ' },
+      { icon: '✅', label: 'ปิดงาน', href: 'tickets.html' },
+    ],
+  };
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+  }
+
+  function renderMenu(role) {
+    const container = document.getElementById('menu-container');
+    container.innerHTML = '';
+    const items = MENUS[role] || [];
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'menu-item';
+      div.innerHTML = `<span class="icon">${item.icon}</span>${item.label}`;
+      div.onclick = () => {
+        if (item.href) { location.href = item.href; }
+        else { alert(item.label + ' (กำลังพัฒนาในเฟสถัดไป)'); }
+      };
+      container.appendChild(div);
+    });
+  }
+
+  const ROLE_LABEL = { admin: 'แอดมิน', supervisor: 'หัวหน้าช่าง', technician: 'ช่างเทคนิค' };
+
+  async function loadProfileAndShowApp(authUser) {
+    // จับคู่ auth user กับตาราง users ด้วย email
+    const { data, error } = await sb
+      .from('users')
+      .select('name, role, active')
+      .eq('email', authUser.email)
+      .single();
+
+    if (error || !data) {
+      showError('ไม่พบบัญชีนี้ในระบบ กรุณาติดต่อแอดมิน');
+      await sb.auth.signOut();
+      return;
+    }
+    if (!data.active) {
+      showError('บัญชีนี้ถูกระงับการใช้งาน');
+      await sb.auth.signOut();
+      return;
+    }
+
+    document.getElementById('user-name').textContent = data.name;
+    document.getElementById('user-role').textContent = ROLE_LABEL[data.role] || data.role;
+    renderMenu(data.role);
+    sessionStorage.setItem('role', data.role);
+    sessionStorage.setItem('name', data.name);
+
+    loginScreen.style.display = 'none';
+    appScreen.style.display = 'block';
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.style.display = 'none';
+    loginBtn.disabled = true;
+    loginBtn.textContent = 'กำลังเข้าสู่ระบบ...';
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+    loginBtn.disabled = false;
+    loginBtn.textContent = 'เข้าสู่ระบบ';
+
+    if (error) {
+      showError('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      return;
+    }
+    await loadProfileAndShowApp(data.user);
+  });
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut();
+    sessionStorage.clear();
+    appScreen.style.display = 'none';
+    loginScreen.style.display = 'flex';
+  });
+
+  // เช็ค session ที่ค้างไว้ตอนเปิดแอปใหม่
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session && session.user) {
+      await loadProfileAndShowApp(session.user);
+    }
+  })();
+
+  // ลงทะเบียน service worker สำหรับ PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
