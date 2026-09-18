@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>จัดการผู้ใช้งาน</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary:#0f766e; --primary-dark:#0d5c56; --bg:#f4f6f7; --card:#ffffff;
+    --text:#1f2937; --muted:#6b7280; --danger:#dc2626; --border:#e5e7eb;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Sarabun',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header.topbar { background:var(--primary); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; }
+  header.topbar button.back { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:0; }
+  header.topbar h2 { margin:0; font-size:17px; flex:1; }
+  main { padding:14px; max-width:640px; margin:0 auto 40px; }
+
+  .form-card { background:var(--card); border-radius:14px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  input, select { width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px; font-size:15px; margin-bottom:14px; font-family:inherit; }
+  .btn-primary { width:100%; padding:13px; border:none; border-radius:10px; background:var(--primary); color:#fff; font-size:16px; font-weight:600; cursor:pointer; }
+  .btn-primary:disabled { background:#9ca3af; }
+
+  .user-card { background:var(--card); border-radius:14px; padding:14px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .user-info .name { font-weight:700; font-size:15px; }
+  .user-info .meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .role-tag { display:inline-block; font-size:11px; padding:2px 8px; border-radius:20px; background:#e0f2f1; color:var(--primary-dark); margin-top:4px; }
+  .role-tag.inactive { background:#fee2e2; color:var(--danger); }
+  .switch { position:relative; width:44px; height:24px; flex-shrink:0; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; inset:0; background:#d1d5db; border-radius:24px; cursor:pointer; transition:0.2s; }
+  .slider::before { content:''; position:absolute; width:18px; height:18px; left:3px; top:3px; background:#fff; border-radius:50%; transition:0.2s; }
+  input:checked + .slider { background:var(--primary); }
+  input:checked + .slider::before { transform:translateX(20px); }
+
+  .section-title { font-size:14px; font-weight:700; margin:16px 0 8px; color:var(--primary-dark); }
+  .loading, .err { text-align:center; padding:30px; color:var(--muted); font-size:14px; }
+  .err { color:var(--danger); }
+  .credential-box { background:#fef9c3; border:1px solid #facc15; border-radius:10px; padding:14px; margin-bottom:14px; font-size:14px; }
+  .credential-box b { user-select:all; }
+
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
+    align-items:center; justify-content:center; z-index:100; padding:16px;
+  }
+  .modal-overlay.open { display:flex; }
+  .modal-box {
+    background:var(--card); border-radius:14px; padding:20px; width:100%; max-width:360px;
+  }
+  .modal-box h3 { margin:0 0 4px; font-size:16px; }
+  .modal-box p.who { margin:0 0 16px; font-size:13px; color:var(--muted); }
+  .pw-row { display:flex; gap:8px; margin-bottom:6px; }
+  .pw-row input { margin-bottom:0; flex:1; }
+  .btn-gen {
+    flex-shrink:0; width:auto; padding:0 12px; border-radius:10px; border:1px solid var(--border);
+    background:#fff; color:var(--text); font-size:13px; font-weight:500; cursor:pointer;
+  }
+  .pw-hint { font-size:12px; color:var(--muted); margin:0 0 16px; }
+  .modal-actions { display:flex; gap:10px; }
+  .modal-actions button { width:100%; }
+  .btn-cancel { background:#fff; color:var(--text); border:1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="back" onclick="location.href='index.html'">←</button>
+  <h2>จัดการผู้ใช้งาน</h2>
+</header>
+
+<main>
+  <div class="form-card">
+    <div class="section-title" style="margin-top:0;">เพิ่มผู้ใช้งานใหม่</div>
+    <div id="credential-result"></div>
+
+    <label>ชื่อ</label>
+    <input type="text" id="n-name">
+
+    <label>ชื่อผู้ใช้งาน (สำหรับ login)</label>
+    <input type="text" id="n-email" placeholder="เช่น somchai (ไม่ต้องใส่ @m.com)">
+
+    <label>เบอร์โทร</label>
+    <input type="text" id="n-phone">
+
+    <label>บทบาท</label>
+    <select id="n-role">
+      <option value="technician">ช่างเทคนิค</option>
+      <option value="supervisor">หัวหน้าช่าง</option>
+      <option value="admin">แอดมิน</option>
+    </select>
+
+    <button class="btn-primary" id="add-btn" onclick="addUser()">เพิ่มผู้ใช้งาน</button>
+  </div>
+
+  <div class="section-title">รายชื่อผู้ใช้งานทั้งหมด</div>
+  <div id="user-list"><div class="loading">กำลังโหลด...</div></div>
+</main>
+
+<div class="modal-overlay" id="reset-modal">
+  <div class="modal-box">
+    <h3>รีเซ็ตรหัสผ่าน</h3>
+    <p class="who">สำหรับ <b id="reset-modal-name">-</b></p>
+    <label>รหัสผ่านใหม่</label>
+    <div class="pw-row">
+      <input type="text" id="reset-modal-pw" autocomplete="off">
+      <button type="button" class="btn-gen" onclick="fillGeneratedPassword()">สุ่ม</button>
+    </div>
+    <p class="pw-hint">พิมพ์รหัสผ่านเอง หรือกด "สุ่ม" ให้ระบบสร้างให้ (อย่างน้อย 6 ตัวอักษร)</p>
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" onclick="closeResetModal()">ยกเลิก</button>
+      <button type="button" class="btn-primary" id="reset-modal-confirm" onclick="confirmResetPassword()">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const LOGIN_DOMAIN = '@m.com';
+  const toUsername = (email) => (email || '').split('@')[0];
+
+  let myRole = null;
+
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'index.html'; return; }
+    const { data: me, error: meErr } = await sb.from('users').select('role').ilike('email', session.user.email).single();
+    if (meErr) {
+      alert('ตรวจสอบสิทธิ์ไม่สำเร็จ: ' + meErr.message + '\n\n(อีเมลใน login: ' + session.user.email + ')');
+      location.href = 'index.html'; return;
+    }
+    if (!me || !['admin', 'supervisor'].includes(me.role)) { location.href = 'index.html'; return; }
+    myRole = me.role;
+
+    // หัวหน้าช่างสร้างได้แค่ supervisor/technician ห้ามสร้าง admin
+    if (myRole === 'supervisor') {
+      document.getElementById('n-role').querySelector('option[value="admin"]').remove();
+    }
+
+    await loadUsers();
+  })();
+
+  function genPassword() {
+    return Math.random().toString(36).slice(-4) + Math.random().toString(36).slice(-4).toUpperCase() + '!9';
+  }
+
+  async function addUser() {
+    const name = document.getElementById('n-name').value.trim();
+    const usernameRaw = document.getElementById('n-email').value.trim().toLowerCase();
+    const email = usernameRaw.includes('@') ? usernameRaw : usernameRaw + LOGIN_DOMAIN;
+    const phone = document.getElementById('n-phone').value.trim();
+    const role = document.getElementById('n-role').value;
+
+    if (!name || !usernameRaw) { alert('กรุณากรอกชื่อและชื่อผู้ใช้งาน'); return; }
+
+    const password = genPassword();
+    const btn = document.getElementById('add-btn');
+    btn.disabled = true; btn.textContent = 'กำลังสร้าง...';
+
+    try {
+      const { data, error } = await sb.functions.invoke('create-user', {
+        body: { name, email, password, phone, role }
+      });
+
+      if (error || (data && data.error)) {
+        throw new Error((data && data.error) || error.message);
+      }
+
+      document.getElementById('credential-result').innerHTML = `
+        <div class="credential-box">
+          ✅ สร้างผู้ใช้งาน <b>${name}</b> เรียบร้อย<br>
+          ชื่อผู้ใช้งานสำหรับ login: <b>${toUsername(email)}</b><br>
+          รหัสผ่านชั่วคราว: <b>${password}</b><br>
+          <small>กรุณาคัดลอกไปให้ผู้ใช้งานตอนนี้เลย จะไม่แสดงซ้ำอีก</small>
+        </div>`;
+
+      document.getElementById('n-name').value = '';
+      document.getElementById('n-email').value = '';
+      document.getElementById('n-phone').value = '';
+      document.getElementById('n-role').selectedIndex = 0;
+
+      await loadUsers();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'เพิ่มผู้ใช้งาน';
+    }
+  }
+
+  const ROLE_LABEL = { admin: 'แอดมิน', supervisor: 'หัวหน้าช่าง', technician: 'ช่างเทคนิค' };
+
+  async function loadUsers() {
+    const listEl = document.getElementById('user-list');
+    const { data, error } = await sb.from('users').select('*').order('created_at', { ascending: false });
+
+    if (error) { listEl.innerHTML = `<div class="err">โหลดข้อมูลไม่สำเร็จ: ${error.message}</div>`; return; }
+    if (!data || data.length === 0) { listEl.innerHTML = '<div class="loading">ยังไม่มีผู้ใช้งาน</div>'; return; }
+
+    listEl.innerHTML = data.map(u => `
+      <div class="user-card">
+        <div class="user-info">
+          <div class="name">${u.name}</div>
+          <div class="meta">${toUsername(u.email) || '-'} ${u.phone ? '• ' + u.phone : ''}</div>
+          <span class="role-tag ${u.active ? '' : 'inactive'}">${ROLE_LABEL[u.role] || u.role}${u.active ? '' : ' • ปิดใช้งาน'}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+          ${(myRole === 'admin' || (myRole === 'supervisor' && u.role === 'technician')) ? `
+            <button style="font-size:12px; padding:6px 10px; border-radius:8px; border:1px solid var(--border); background:#fff; cursor:pointer;"
+              onclick="resetPassword('${u.email}', '${u.name.replace(/'/g, "\\'")}')">รีเซ็ตรหัสผ่าน</button>
+          ` : ''}
+          ${myRole === 'admin' ? `
+            <label class="switch">
+              <input type="checkbox" ${u.active ? 'checked' : ''} onchange="toggleActive(${u.id}, this.checked)">
+              <span class="slider"></span>
+            </label>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  let resetTarget = null; // { email, name }
+
+  function resetPassword(email, name) {
+    resetTarget = { email, name };
+    document.getElementById('reset-modal-name').textContent = name;
+    document.getElementById('reset-modal-pw').value = genPassword();
+    document.getElementById('reset-modal').classList.add('open');
+  }
+
+  function closeResetModal() {
+    document.getElementById('reset-modal').classList.remove('open');
+    resetTarget = null;
+  }
+
+  function fillGeneratedPassword() {
+    document.getElementById('reset-modal-pw').value = genPassword();
+  }
+
+  async function confirmResetPassword() {
+    if (!resetTarget) return;
+    const { email, name } = resetTarget;
+    const newPassword = document.getElementById('reset-modal-pw').value.trim();
+
+    if (!newPassword || newPassword.length < 6) {
+      alert('กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+    if (!confirm(`ยืนยันรีเซ็ตรหัสผ่านของ "${name}"? รหัสผ่านเดิมจะใช้ไม่ได้ทันที`)) return;
+
+    const btn = document.getElementById('reset-modal-confirm');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+    try {
+      const { data, error } = await sb.functions.invoke('create-user', {
+        body: { action: 'reset_password', email, newPassword }
+      });
+      if (error || (data && data.error)) throw new Error((data && data.error) || error.message);
+
+      closeResetModal();
+
+      document.getElementById('credential-result').innerHTML = `
+        <div class="credential-box">
+          🔑 รีเซ็ตรหัสผ่านของ <b>${name}</b> เรียบร้อย<br>
+          ชื่อผู้ใช้งานสำหรับ login: <b>${toUsername(email)}</b><br>
+          รหัสผ่านใหม่: <b>${newPassword}</b><br>
+          <small>กรุณาคัดลอกรหัสผ่านนี้ไปให้ผู้ใช้งานตอนนี้เลย จะไม่แสดงซ้ำอีก</small>
+        </div>`;
+      document.getElementById('credential-result').scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = 'ยืนยัน';
+    }
+  }
+
+  async function toggleActive(id, active) {
+    const { error } = await sb.from('users').update({ active }).eq('id', id);
+    if (error) { alert('อัพเดทไม่สำเร็จ: ' + error.message); loadUsers(); return; }
+    loadUsers();
+  }
+</script>
+</body>
+</html>
