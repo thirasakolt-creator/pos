@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routine กะเช้า</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary:#0f766e; --primary-dark:#0d5c56; --bg:#f4f6f7; --card:#ffffff;
+    --text:#1f2937; --muted:#6b7280; --border:#e5e7eb;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Sarabun',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header.topbar { background:var(--primary); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  header.topbar button.back { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:0; }
+  header.topbar h2 { margin:0; font-size:17px; flex:1; }
+  main { padding:16px; max-width:480px; margin:0 auto 40px; }
+
+  .form-card { background:var(--card); border-radius:14px; padding:18px; }
+  label { display:block; font-size:13px; color:var(--muted); margin-bottom:6px; }
+  input, select { width:100%; padding:11px 12px; border:1px solid var(--border); border-radius:10px; font-size:15px; margin-bottom:14px; font-family:inherit; }
+  .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .unit-hint { font-size:12px; color:var(--muted); margin-top:-10px; margin-bottom:14px; }
+  .btn-primary { width:100%; padding:13px; border:none; border-radius:10px; background:var(--primary); color:#fff; font-size:16px; font-weight:600; cursor:pointer; }
+  .btn-primary:disabled { background:#9ca3af; }
+  .locked-msg { text-align:center; padding:40px 20px; color:var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="back" onclick="location.href='routine.html'">←</button>
+  <h2>Routine กะเช้า</h2>
+</header>
+
+<main id="page-body"><div style="text-align:center; padding:40px; color:var(--muted);">กำลังโหลด...</div></main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  function bangkokMinutesNow() {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date());
+    const h = Number(parts.find(p => p.type === 'hour').value);
+    const m = Number(parts.find(p => p.type === 'minute').value);
+    return h * 60 + m;
+  }
+  function bangkokDateStr() {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  }
+
+  let myUserId = null;
+  let myRole = null;
+
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'index.html'; return; }
+    const { data: me } = await sb.from('users').select('id, role').ilike('email', session.user.email).single();
+    if (!me) { location.href = 'index.html'; return; }
+    myUserId = me.id;
+    myRole = me.role;
+
+    const unlocked = bangkokMinutesNow() >= 8 * 60;
+    const body = document.getElementById('page-body');
+
+    if (!unlocked && !['admin', 'supervisor'].includes(myRole)) {
+      body.innerHTML = `<div class="locked-msg">🔒 ยังไม่ถึงเวลาทำ Routine กะเช้า<br>เปิดให้บันทึกตั้งแต่ 08:00 น.</div>`;
+      return;
+    }
+
+    const { data: techs } = await sb.from('users').select('id, name').eq('role', 'technician').eq('active', true);
+
+    body.innerHTML = `
+      <div class="form-card">
+        <label>วันที่บันทึก</label>
+        <input type="text" value="${bangkokDateStr()}" disabled>
+
+        <label>ชื่อช่างผู้ตรวจ</label>
+        <select id="f-tech">
+          ${(techs || []).map(t => `<option value="${t.id}" ${t.id === myUserId ? 'selected' : ''}>${t.name}</option>`).join('')}
+        </select>
+
+        <div class="row2">
+          <div><label>Cl (คลอรีน)</label><input type="number" step="0.01" id="f-cl"></div>
+          <div><label>pH</label><input type="number" step="0.01" id="f-ph"></div>
+        </div>
+
+        <label>Chlorine ที่ใส่เมื่อคืน</label>
+        <input type="number" step="0.01" id="f-chlorine">
+        <div class="unit-hint">หน่วย: กิโลกรัม (kg)</div>
+
+        <label>Soda Ash ที่ใส่เมื่อคืน</label>
+        <input type="number" step="0.01" id="f-soda">
+        <div class="unit-hint">หน่วย: กิโลกรัม (kg)</div>
+
+        <label>F-2000</label>
+        <input type="number" step="0.01" id="f-f2000">
+        <div class="unit-hint">หน่วย: ลิตร (L)</div>
+
+        <label>Pool Clear</label>
+        <input type="number" step="0.01" id="f-poolclear">
+        <div class="unit-hint">หน่วย: ลิตร (L)</div>
+
+        <button class="btn-primary" id="submit-btn" onclick="submitRoutine()">บันทึก Routine</button>
+      </div>`;
+  })();
+
+  async function submitRoutine() {
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+    const payload = {
+      technician_id: parseInt(document.getElementById('f-tech').value),
+      cl: parseFloat(document.getElementById('f-cl').value) || null,
+      ph: parseFloat(document.getElementById('f-ph').value) || null,
+      chlorine_kg: parseFloat(document.getElementById('f-chlorine').value) || null,
+      soda_ash_kg: parseFloat(document.getElementById('f-soda').value) || null,
+      f2000_l: parseFloat(document.getElementById('f-f2000').value) || null,
+      pool_clear_l: parseFloat(document.getElementById('f-poolclear').value) || null,
+    };
+
+    const { error } = await sb.from('routine_pool_checks').insert(payload);
+    btn.disabled = false; btn.textContent = 'บันทึก Routine';
+
+    if (error) { alert('เกิดข้อผิดพลาด: ' + error.message); return; }
+    alert('บันทึก Routine กะเช้าเรียบร้อย');
+    location.href = 'routine.html';
+  }
+</script>
+</body>
+</html>

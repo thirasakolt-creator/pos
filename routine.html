@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routine</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary:#0f766e; --primary-dark:#0d5c56; --bg:#f4f6f7; --card:#ffffff;
+    --text:#1f2937; --muted:#6b7280; --border:#e5e7eb;
+    --lock-bg:#f3f4f6; --lock-text:#6b7280;
+    --open-bg:#d1fae5; --open-text:#065f46;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Sarabun',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header.topbar { background:var(--primary); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  header.topbar button.back { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:0; }
+  header.topbar h2 { margin:0; font-size:17px; flex:1; }
+  main { padding:16px; max-width:520px; margin:0 auto; }
+
+  .shift-card { background:var(--card); border-radius:16px; padding:18px; margin-bottom:14px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .shift-card .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .shift-card .title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .shift-card .desc { font-size:13px; color:var(--muted); margin-bottom:12px; }
+  .status-badge { display:inline-block; padding:6px 12px; border-radius:20px; font-size:13px; font-weight:600; }
+  .status-badge.locked { background:var(--lock-bg); color:var(--lock-text); }
+  .status-badge.open { background:var(--open-bg); color:var(--open-text); }
+  .shift-btn {
+    width:100%; margin-top:10px; padding:13px; border:none; border-radius:10px;
+    background:var(--primary); color:#fff; font-size:15px; font-weight:600; cursor:pointer;
+  }
+  .shift-btn:disabled { background:#d1d5db; color:#9ca3af; cursor:not-allowed; }
+  .shift-btn.external { background:#fff; border:1px solid var(--primary); color:var(--primary); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="back" onclick="location.href='index.html'">←</button>
+  <h2>Routine ประจำกะ</h2>
+</header>
+
+<main id="shift-container">
+  <div style="text-align:center; padding:40px; color:var(--muted);">กำลังโหลด...</div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ลิงก์เว็บจดมิเตอร์น้ำเดิม (ใส่ URL จริงตรงนี้)
+  // ตอนนี้ยังต้อง login แยกอยู่ก่อน รอเชื่อม SSO ให้เสร็จ
+  const METER_APP_URL = 'https://thirasakolt-creator.github.io/ef/index.html';
+
+  // เวลาไทย (Asia/Bangkok) แบบเดียวกับที่เว็บจดน้ำใช้ ไม่พึ่ง timezone ของเครื่อง
+  function bangkokMinutesNow() {
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Asia/Bangkok', hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date());
+    const h = Number(parts.find(p => p.type === 'hour').value);
+    const m = Number(parts.find(p => p.type === 'minute').value);
+    return h * 60 + m;
+  }
+
+  const SHIFTS = [
+    {
+      key: 'morning', icon: '🌅', title: 'กะเช้า — ตรวจวัดค่าสระว่ายน้ำ',
+      desc: 'บันทึกค่า Cl, pH และปริมาณสารเคมีที่ใช้', unlockMinutes: 8 * 60,
+      unlockLabel: '08:00', type: 'internal', href: 'routine-pool.html'
+    },
+    {
+      key: 'noon', icon: '☀️', title: 'กะเที่ยง — จดมิเตอร์น้ำ (รอบกลางวัน)',
+      desc: 'บันทึกมิเตอร์น้ำผ่านเว็บจดน้ำ', unlockMinutes: 11 * 60 + 30,
+      unlockLabel: '11:30', type: 'external'
+    },
+    {
+      key: 'night', icon: '🌙', title: 'กะกลางคืน — จดมิเตอร์น้ำ (รอบเที่ยงคืน)',
+      desc: 'บันทึกเฉพาะรอบเที่ยงคืน กรอกแค่เลข 2 หลักท้าย', unlockMinutes: 20 * 60 + 30,
+      unlockLabel: '20:30', type: 'external'
+    },
+  ];
+
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'index.html'; return; }
+
+    const nowMin = bangkokMinutesNow();
+    const container = document.getElementById('shift-container');
+
+    container.innerHTML = SHIFTS.map(s => {
+      const unlocked = nowMin >= s.unlockMinutes;
+      const action = s.type === 'internal'
+        ? `location.href='${s.href}'`
+        : `openMeterApp('${s.key === 'night' ? 'MIDNIGHT' : 'DAY'}')`;
+      return `
+        <div class="shift-card">
+          <div class="top">
+            <div class="title">${s.icon} ${s.title}</div>
+          </div>
+          <div class="desc">${s.desc}</div>
+          <span class="status-badge ${unlocked ? 'open' : 'locked'}">
+            ${unlocked ? '✓ เปิดให้บันทึก Routine' : '🔒 ยังไม่ถึงเวลาทำ Routine (เปิด ' + s.unlockLabel + ' น.)'}
+          </span>
+          <button class="shift-btn ${s.type === 'external' ? 'external' : ''}"
+            ${unlocked ? '' : 'disabled'}
+            onclick="${action}">
+            ${s.type === 'internal' ? 'เปิดฟอร์มบันทึก' : 'ไปที่เว็บจดมิเตอร์น้ำ'}
+          </button>
+        </div>`;
+    }).join('');
+  })();
+
+  async function openMeterApp(sessionType) {
+    try {
+      const { data, error } = await sb.functions.invoke('get-meter-session');
+      if (error || (data && data.error)) throw new Error((data && data.error) || error.message);
+
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data.session))));
+      let url = `${METER_APP_URL}?sso=${encoded}`;
+      if (sessionType === 'MIDNIGHT') url += '&session=MIDNIGHT';
+      location.href = url;
+    } catch (err) {
+      alert('เชื่อมต่อเว็บจดน้ำไม่สำเร็จ: ' + err.message);
+    }
+  }
+</script>
+</body>
+</html>

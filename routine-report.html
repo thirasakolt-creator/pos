@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงาน Routine</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<style>
+  :root {
+    --primary:#0f766e; --primary-dark:#0d5c56; --bg:#f4f6f7; --card:#ffffff;
+    --text:#1f2937; --muted:#6b7280; --border:#e5e7eb;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:'Sarabun',-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  header.topbar { background:var(--primary); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  header.topbar button.back { background:none; border:none; color:#fff; font-size:20px; cursor:pointer; padding:0; }
+  header.topbar h2 { margin:0; font-size:17px; flex:1; }
+  main { padding:16px; max-width:640px; margin:0 auto 40px; }
+
+  .tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .tab { flex:1; text-align:center; padding:10px; border-radius:10px; background:var(--card); font-size:13px; font-weight:600; cursor:pointer; color:var(--muted); }
+  .tab.active { background:var(--primary); color:#fff; }
+
+  .filter-card { background:var(--card); border-radius:14px; padding:14px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-end; }
+  .filter-card label { font-size:12px; color:var(--muted); display:block; margin-bottom:6px; }
+  .filter-card input { padding:10px; border:1px solid var(--border); border-radius:8px; font-size:14px; font-family:inherit; }
+
+  .stat-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; margin-bottom:16px; }
+  .stat-box { background:var(--card); border-radius:14px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,0.06); }
+  .stat-box .val { font-size:22px; font-weight:700; color:var(--primary-dark); }
+  .stat-box .label { font-size:12px; color:var(--muted); margin-top:4px; }
+
+  .chart-card { background:var(--card); border-radius:14px; padding:16px; }
+  .loading, .empty { text-align:center; padding:30px; color:var(--muted); font-size:14px; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <button class="back" onclick="location.href='index.html'">←</button>
+  <h2>รายงาน Routine</h2>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="monthly">รายเดือน</div>
+    <div class="tab" data-tab="yearly">รายปี</div>
+    <div class="tab" data-tab="alltime">สถิติรวมทั้งหมด</div>
+  </div>
+
+  <div id="filter-container"></div>
+  <div id="stat-container"><div class="loading">กำลังโหลด...</div></div>
+  <div class="chart-card" id="chart-container" style="display:none;">
+    <canvas id="trend-chart" height="200"></canvas>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script>
+  const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentTab = 'monthly';
+  let chartInstance = null;
+  const now = new Date();
+  const nowBkk = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit' }).format(now);
+  let selectedMonth = nowBkk; // YYYY-MM
+  let selectedYear = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Bangkok', year: 'numeric' }).format(now);
+
+  (async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'index.html'; return; }
+    const { data: me } = await sb.from('users').select('role').ilike('email', session.user.email).single();
+    if (!me || !['admin', 'supervisor'].includes(me.role)) { location.href = 'index.html'; return; }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentTab = tab.dataset.tab;
+        render();
+      });
+    });
+
+    render();
+  })();
+
+  function renderFilter() {
+    const el = document.getElementById('filter-container');
+    if (currentTab === 'monthly') {
+      el.innerHTML = `
+        <div class="filter-card">
+          <div><label>เลือกเดือน</label><input type="month" id="month-input" value="${selectedMonth}"></div>
+        </div>`;
+      document.getElementById('month-input').addEventListener('change', (e) => { selectedMonth = e.target.value; loadAndRender(); });
+    } else if (currentTab === 'yearly') {
+      el.innerHTML = `
+        <div class="filter-card">
+          <div><label>เลือกปี (ค.ศ.)</label><input type="number" id="year-input" value="${selectedYear}" style="width:100px;"></div>
+        </div>`;
+      document.getElementById('year-input').addEventListener('change', (e) => { selectedYear = e.target.value; loadAndRender(); });
+    } else {
+      el.innerHTML = '';
+    }
+  }
+
+  function render() {
+    renderFilter();
+    loadAndRender();
+  }
+
+  async function loadAndRender() {
+    const statEl = document.getElementById('stat-container');
+    const chartWrap = document.getElementById('chart-container');
+    statEl.innerHTML = '<div class="loading">กำลังโหลด...</div>';
+    chartWrap.style.display = 'none';
+
+    let query = sb.from('routine_pool_checks').select('*');
+    let rangeStart, rangeEnd;
+
+    if (currentTab === 'monthly') {
+      const [y, m] = selectedMonth.split('-').map(Number);
+      rangeStart = `${selectedMonth}-01`;
+      const lastDay = new Date(y, m, 0).getDate();
+      rangeEnd = `${selectedMonth}-${String(lastDay).padStart(2, '0')}`;
+      query = query.gte('business_date', rangeStart).lte('business_date', rangeEnd);
+    } else if (currentTab === 'yearly') {
+      rangeStart = `${selectedYear}-01-01`;
+      rangeEnd = `${selectedYear}-12-31`;
+      query = query.gte('business_date', rangeStart).lte('business_date', rangeEnd);
+    }
+    // alltime: ไม่กรอง
+
+    const { data, error } = await query.order('business_date', { ascending: true });
+    if (error) { statEl.innerHTML = `<div class="empty">โหลดข้อมูลไม่สำเร็จ: ${error.message}</div>`; return; }
+    if (!data || data.length === 0) { statEl.innerHTML = '<div class="empty">ไม่มีข้อมูลในช่วงนี้</div>'; return; }
+
+    const sum = (key) => data.reduce((a, r) => a + (Number(r[key]) || 0), 0);
+    const avg = (key) => {
+      const vals = data.map(r => Number(r[key])).filter(v => !isNaN(v) && v !== null);
+      return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length) : 0;
+    };
+
+    statEl.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat-box"><div class="val">${sum('chlorine_kg').toFixed(1)} kg</div><div class="label">Chlorine รวม</div></div>
+        <div class="stat-box"><div class="val">${sum('soda_ash_kg').toFixed(1)} kg</div><div class="label">Soda Ash รวม</div></div>
+        <div class="stat-box"><div class="val">${sum('f2000_l').toFixed(1)} L</div><div class="label">F-2000 รวม</div></div>
+        <div class="stat-box"><div class="val">${sum('pool_clear_l').toFixed(1)} L</div><div class="label">Pool Clear รวม</div></div>
+        <div class="stat-box"><div class="val">${data.length}</div><div class="label">จำนวนครั้งที่ตรวจวัด</div></div>
+        <div class="stat-box"><div class="val">${avg('cl').toFixed(2)}</div><div class="label">ค่า Cl เฉลี่ย</div></div>
+        <div class="stat-box"><div class="val">${avg('ph').toFixed(2)}</div><div class="label">ค่า pH เฉลี่ย</div></div>
+      </div>`;
+
+    if (currentTab !== 'monthly') {
+      renderTrendChart(data);
+    }
+  }
+
+  function renderTrendChart(data) {
+    const chartWrap = document.getElementById('chart-container');
+    chartWrap.style.display = 'block';
+
+    // จัดกลุ่มตามเดือน (YYYY-MM) รวม chlorine_kg
+    const byMonth = {};
+    data.forEach(r => {
+      const key = r.business_date.slice(0, 7);
+      byMonth[key] = (byMonth[key] || 0) + (Number(r.chlorine_kg) || 0);
+    });
+    const labels = Object.keys(byMonth).sort();
+    const values = labels.map(k => byMonth[k]);
+
+    if (chartInstance) chartInstance.destroy();
+    const ctx = document.getElementById('trend-chart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{ label: 'Chlorine ใช้รวม (kg) ต่อเดือน', data: values, borderColor: '#0f766e', backgroundColor: 'rgba(15,118,110,0.1)', fill: true, tension: 0.3 }]
+      },
+      options: { responsive: true, plugins: { legend: { display: true } } }
+    });
+  }
+</script>
+</body>
+</html>
