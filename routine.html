@@ -49,11 +49,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
   const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0.TouB1KptqkZCgl-lXL_AXu2JS7H8ok-LP6IcEqMm7DY';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inpib3l1cmdxa3Rjd3VzbWFta2psIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODc1OTIsImV4cCI6MjEwNTE2MzU5Mn0';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // ลิงก์เว็บจดมิเตอร์น้ำเดิม (ใส่ URL จริงตรงนี้)
-  // ตอนนี้ยังต้อง login แยกอยู่ก่อน รอเชื่อม SSO ให้เสร็จ
+  // ลิงก์เว็บจดมิเตอร์น้ำเดิม (login อยู่ในตัวลิงก์นี้แล้ว ไม่ต้องส่ง session ใดๆ)
+  // ใช้ลิงก์เดียวกันทั้งกะเที่ยงและกะกลางคืน
   const METER_APP_URL = 'https://thirasakolt-creator.github.io/ef/index.html';
 
   // เวลาไทย (Asia/Bangkok) แบบเดียวกับที่เว็บจดน้ำใช้ ไม่พึ่ง timezone ของเครื่อง
@@ -74,13 +74,13 @@
     },
     {
       key: 'noon', icon: '☀️', title: 'กะเที่ยง — จดมิเตอร์น้ำ (รอบกลางวัน)',
-      desc: 'บันทึกมิเตอร์น้ำผ่านเว็บจดน้ำ', unlockMinutes: 8 * 60 + 30,
-      unlockLabel: '08:30', type: 'external'
+      desc: 'บันทึกมิเตอร์น้ำผ่านเว็บจดน้ำ', unlockMinutes: 11 * 60 + 30,
+      unlockLabel: '11:30', type: 'external'
     },
     {
       key: 'night', icon: '🌙', title: 'กะกลางคืน — จดมิเตอร์น้ำ (รอบเที่ยงคืน)',
-      desc: 'บันทึกเฉพาะรอบเที่ยงคืน กรอกแค่เลข 2 หลักท้าย', unlockMinutes: 8 * 60 + 30,
-      unlockLabel: '08:30', type: 'external'
+      desc: 'บันทึกเฉพาะรอบเที่ยงคืน กรอกแค่เลข 2 หลักท้าย', unlockMinutes: 20 * 60 + 30,
+      unlockLabel: '20:30', type: 'external'
     },
   ];
 
@@ -95,7 +95,7 @@
       const unlocked = nowMin >= s.unlockMinutes;
       const action = s.type === 'internal'
         ? `location.href='${s.href}'`
-        : `openMeterApp('${s.key === 'night' ? 'MIDNIGHT' : 'DAY'}')`;
+        : `location.href='${METER_APP_URL}'`;
       return `
         <div class="shift-card">
           <div class="top">
@@ -113,20 +113,6 @@
         </div>`;
     }).join('');
   })();
-
-  async function openMeterApp(sessionType) {
-    try {
-      const { data, error } = await sb.functions.invoke('get-meter-session');
-      if (error || (data && data.error)) throw new Error((data && data.error) || error.message);
-
-      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data.session))));
-      let url = `${METER_APP_URL}?sso=${encoded}`;
-      if (sessionType === 'MIDNIGHT') url += '&session=MIDNIGHT';
-      location.href = url;
-    } catch (err) {
-      alert('เชื่อมต่อเว็บจดน้ำไม่สำเร็จ: ' + err.message);
-    }
-  }
 </script>
 </body>
 </html>
