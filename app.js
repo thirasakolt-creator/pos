@@ -539,16 +539,32 @@ if ($('btnLogout')) {
 }
 
 /*** ══════════ START ══════════ ***/
+/* รอบจดน้ำที่ล็อกจาก URL: ?round=midnight หรือ ?round=day (ไม่ระบุ = ให้สลับเองได้ตามหน้าเดิม) */
+const ROUND_PARAM = (new URLSearchParams(location.search).get('round') || '').toLowerCase();
+
 async function start() {
   const boot = await api('bootstrap');
   S.meters = boot.meters;
   S.bizDate = boot.businessDate;
   S.viewDate = boot.businessDate;
 
+  if (ROUND_PARAM === 'midnight') {
+    S.session = 'MIDNIGHT';
+    S.viewDate = midnightBusinessDate() || boot.businessDate;
+  } else if (ROUND_PARAM === 'day') {
+    S.session = 'DAY';
+  }
+  if ($('btnSessionDay')) {
+    $('btnSessionDay').classList.toggle('active', S.session === 'DAY');
+    $('btnSessionMidnight').classList.toggle('active', S.session === 'MIDNIGHT');
+  }
+  const ttl = document.querySelector('.appbar-title');
+  if (ttl && ROUND_PARAM) ttl.textContent = ROUND_PARAM === 'midnight' ? '🌙 จดมิเตอร์น้ำ (รอบเที่ยงคืน)' : '☀️ จดมิเตอร์น้ำ (รอบกลางวัน)';
+
   $('bizDate').textContent = boot.businessDate;
   $('userName').textContent = S.user.displayName + ' (' + S.user.role + ')';
   $('sumDate').value = boot.businessDate;
-  $('entryDate').value = boot.businessDate;
+  $('entryDate').value = S.viewDate;
   $('resetDate').value = boot.businessDate;
   $('hisMeter').innerHTML = '<option value="">ทุกจุด</option>' +
     S.meters.map(m => '<option value="' + m.meterId + '">' + m.meterName + '</option>').join('');
@@ -593,14 +609,16 @@ function renderMidnightStatus() {
 
 function switchSession(session) {
   S.session = session;
-  $('btnSessionDay').classList.toggle('active', session === 'DAY');
-  $('btnSessionMidnight').classList.toggle('active', session === 'MIDNIGHT');
+  if ($('btnSessionDay')) {
+    $('btnSessionDay').classList.toggle('active', session === 'DAY');
+    $('btnSessionMidnight').classList.toggle('active', session === 'MIDNIGHT');
+  }
   S.viewDate = session === 'MIDNIGHT' ? (midnightBusinessDate() || S.bizDate) : S.bizDate;
   if (isAdmin()) $('entryDate').value = S.viewDate;
   loadDay(true);
 }
-$('btnSessionDay').onclick = function () { switchSession('DAY'); };
-$('btnSessionMidnight').onclick = function () { switchSession('MIDNIGHT'); };
+if ($('btnSessionDay')) $('btnSessionDay').onclick = function () { switchSession('DAY'); };
+if ($('btnSessionMidnight')) $('btnSessionMidnight').onclick = function () { switchSession('MIDNIGHT'); };
 
 function refreshStats() {
   const items = S.day ? S.day.items : [];
