@@ -1,4 +1,4 @@
-const CACHE_NAME = 'repair-app-v29';
+const CACHE_NAME = 'repair-app-v30';
 const ASSETS = [
   './index.html',
   './manifest.json',
