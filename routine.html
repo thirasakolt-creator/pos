@@ -67,17 +67,18 @@
     {
       key: 'morning', icon: '🌅', title: 'กะเช้า — ตรวจวัดค่าสระว่ายน้ำ',
       desc: 'บันทึกค่า Cl, pH และปริมาณสารเคมีที่ใช้', unlockMinutes: 8 * 60,
-      unlockLabel: '08:00', type: 'internal', href: 'routine-pool.html'
+      closeMinutes: 11 * 60,
+      unlockLabel: '08:00-11:00', type: 'internal', href: 'routine-pool.html'
     },
     {
       key: 'noon', icon: '☀️', title: 'กะเที่ยง — จดมิเตอร์น้ำ (รอบกลางวัน)',
-      desc: 'บันทึกมิเตอร์น้ำ ไม่ต้อง login ซ้ำ', unlockMinutes: 11 * 60,
+      desc: 'บันทึกมิเตอร์น้ำรอบเที่ยงวัน', unlockMinutes: 11 * 60,
       closeMinutes: 18 * 60,
       unlockLabel: '11:00–18:00', type: 'internal', href: 'meter.html?round=day'
     },
     {
       key: 'night', icon: '🌙', title: 'กะกลางคืน — จดมิเตอร์น้ำ (รอบเที่ยงคืน)',
-      desc: 'บันทึกเฉพาะรอบเที่ยงคืน กรอกแค่เลข 2 หลักท้าย', unlockMinutes: 21 * 60,
+      desc: 'บันทึกมิเตอร์น้ำรอบเที่ยงคืน', unlockMinutes: 21 * 60,
       closeMinutes: 6 * 60, // เปิดข้ามวัน: ปลดล็อก 21:00 ค้างไว้จนถึง 06:00 ของวันถัดไป แล้วล็อก
       unlockLabel: '21:00–06:00', type: 'internal', href: 'meter.html?round=midnight'
     },
