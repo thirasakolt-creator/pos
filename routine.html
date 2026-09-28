@@ -71,13 +71,15 @@
     },
     {
       key: 'noon', icon: '☀️', title: 'กะเที่ยง — จดมิเตอร์น้ำ (รอบกลางวัน)',
-      desc: 'บันทึกมิเตอร์น้ำ ไม่ต้อง login ซ้ำ', unlockMinutes: 11 * 60 + 30,
-      unlockLabel: '11:30', type: 'internal', href: 'meter.html?round=day'
+      desc: 'บันทึกมิเตอร์น้ำ ไม่ต้อง login ซ้ำ', unlockMinutes: 11 * 60,
+      closeMinutes: 18 * 60,
+      unlockLabel: '11:00–18:00', type: 'internal', href: 'meter.html?round=day'
     },
     {
       key: 'night', icon: '🌙', title: 'กะกลางคืน — จดมิเตอร์น้ำ (รอบเที่ยงคืน)',
-      desc: 'บันทึกเฉพาะรอบเที่ยงคืน กรอกแค่เลข 2 หลักท้าย', unlockMinutes: 22 * 60 + 30,
-      unlockLabel: '22:30', type: 'internal', href: 'meter.html?round=midnight'
+      desc: 'บันทึกเฉพาะรอบเที่ยงคืน กรอกแค่เลข 2 หลักท้าย', unlockMinutes: 21 * 60,
+      closeMinutes: 6 * 60, // เปิดข้ามวัน: ปลดล็อก 21:00 ค้างไว้จนถึง 06:00 ของวันถัดไป แล้วล็อก
+      unlockLabel: '21:00–06:00', type: 'internal', href: 'meter.html?round=midnight'
     },
   ];
 
@@ -89,7 +91,11 @@
     const container = document.getElementById('shift-container');
 
     container.innerHTML = SHIFTS.map(s => {
-      const unlocked = nowMin >= s.unlockMinutes;
+      // มี closeMinutes: ถ้า close > unlock = ช่วงเวลาภายในวันเดียว, ถ้า close < unlock = ช่วงข้ามเที่ยงคืน
+      let unlocked;
+      if (s.closeMinutes === undefined) unlocked = nowMin >= s.unlockMinutes;
+      else if (s.closeMinutes > s.unlockMinutes) unlocked = nowMin >= s.unlockMinutes && nowMin < s.closeMinutes;
+      else unlocked = nowMin >= s.unlockMinutes || nowMin < s.closeMinutes;
       return `
         <div class="shift-card">
           <div class="top">
@@ -97,7 +103,7 @@
           </div>
           <div class="desc">${s.desc}</div>
           <span class="status-badge ${unlocked ? 'open' : 'locked'}">
-            ${unlocked ? '✓ เปิดให้บันทึก Routine' : '🔒 ยังไม่ถึงเวลาทำ Routine (เปิด ' + s.unlockLabel + ' น.)'}
+            ${unlocked ? '✓ เปิดให้บันทึก Routine' + (s.closeMinutes !== undefined ? ' (' + s.unlockLabel + ' น.)' : '') : '🔒 ปิดอยู่ — เปิดให้บันทึก ' + s.unlockLabel + ' น.'}
           </span>
           <button class="shift-btn"
             ${unlocked ? '' : 'disabled'}
