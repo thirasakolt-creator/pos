@@ -1315,8 +1315,8 @@ async function delUser(email) {
 window.addEventListener('beforeinstallprompt', function (e) {
   e.preventDefault();
   deferredPrompt = e;
-  $('btnInstall').classList.remove('hidden');
-  $('btnInstallLogin').classList.remove('hidden');
+  if ($('btnInstall')) $('btnInstall').classList.remove('hidden');
+  if ($('btnInstallLogin')) $('btnInstallLogin').classList.remove('hidden');
 });
 
 async function doInstall() {
@@ -1330,18 +1330,18 @@ async function doInstall() {
   deferredPrompt.prompt();
   const res = await deferredPrompt.userChoice;
   if (res.outcome === 'accepted') {
-    $('btnInstall').classList.add('hidden');
-    $('btnInstallLogin').classList.add('hidden');
+    if ($('btnInstall')) $('btnInstall').classList.add('hidden');
+    if ($('btnInstallLogin')) $('btnInstallLogin').classList.add('hidden');
   }
   deferredPrompt = null;
 }
 
-$('btnInstall').onclick = doInstall;
-$('btnInstallLogin').onclick = doInstall;
+if ($('btnInstall')) $('btnInstall').onclick = doInstall;
+if ($('btnInstallLogin')) $('btnInstallLogin').onclick = doInstall;
 
 window.addEventListener('appinstalled', function () {
-  $('btnInstall').classList.add('hidden');
-  $('btnInstallLogin').classList.add('hidden');
+  if ($('btnInstall')) $('btnInstall').classList.add('hidden');
+  if ($('btnInstallLogin')) $('btnInstallLogin').classList.add('hidden');
   deferredPrompt = null;
 });
 
@@ -1354,6 +1354,15 @@ document.querySelectorAll('.tab').forEach(function (t) {
     $('tab-' + t.dataset.tab).classList.remove('hidden');
     if (t.dataset.tab === 'admin') loadUsers();
   };
+});
+
+/*** ══════════ แสดง error ที่ไม่คาดคิดบนหน้าจอ (กันหน้าค้างเงียบๆ) ══════════ ***/
+window.addEventListener('error', function (ev) {
+  const b = document.getElementById('bootError');
+  if (b && document.getElementById('mainView').classList.contains('hidden')) {
+    b.textContent = '⚠️ เกิดข้อผิดพลาด: ' + (ev.message || 'unknown');
+    b.classList.remove('hidden');
+  }
 });
 
 /*** ══════════ INIT ══════════ ***/
