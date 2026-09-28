@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0f766e">
+<meta name="theme-color" content="#3f6b28">
 <meta name="description" content="ระบบบันทึกและติดตามการใช้น้ำ 16 จุดตรวจวัด">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,64 +13,238 @@
 <link rel="manifest" href="./manifest.json">
 <link rel="icon" type="image/png" href="./icons/icon-192.png">
 <link rel="apple-touch-icon" href="./icons/icon-192.png">
-<link rel="stylesheet" href="./styles.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   ระบบจดมิเตอร์น้ำ — Neumorphic / Soft-UI theme
+   Base color: G5251 "Vivid Lawn"
+   ============================================================ */
+:root{
+  --bg1:#eef6df;
+  --bg2:#d6e7b6;
+  --surface:#e3edc8;
+  --surface-2:#dbe8bd;
+  --shadow-d:rgba(140,158,96,0.42);
+  --shadow-l:rgba(255,255,255,0.92);
+  --shadow-d-sm:rgba(140,158,96,0.35);
+  --shadow-l-sm:rgba(255,255,255,0.85);
+  --ink:#33421f;
+  --ink-soft:#4c5c34;
+  --muted:#889468;
+  --muted-2:#a3ae86;
+  --accent:#5c8b39;
+  --accent-2:#3f6b28;
+  --accent-light:#8bc34a;
+  --ok:#2f7d32;
+  --ok-bg:#e3f2d3;
+  --danger:#c0392b;
+  --danger-bg:#fbe4e0;
+  --warn:#a6702a;
+  --warn-bg:#faedd4;
+  --info:#3f6b28;
+  --info-bg:#e6efd6;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Thai","Sarabun",sans-serif;background:linear-gradient(160deg,var(--bg1),var(--bg2));background-attachment:fixed;color:var(--ink);padding-bottom:24px;-webkit-tap-highlight-color:transparent;min-height:100vh}
+.hidden{display:none!important}
+.netbar{background:#a6702a;color:#fff;padding:8px;text-align:center;font-size:13px;position:sticky;top:0;z-index:60}
+
+.login-card{max-width:380px;margin:10vh auto;background:var(--surface);padding:28px;border-radius:22px;box-shadow:14px 14px 30px var(--shadow-d),-14px -14px 30px var(--shadow-l)}
+.logo{font-size:46px;text-align:center}
+.login-card h1{text-align:center;font-size:20px;margin:6px 0;color:var(--ink);font-family:'Poppins',sans-serif}
+.muted{color:var(--muted);font-size:13px;text-align:center;margin-bottom:16px}
+
+label{display:block;font-size:13px;font-weight:600;margin:12px 0 6px;color:var(--ink-soft)}
+input,select{width:100%;padding:12px 14px;border:none;border-radius:14px;font-size:16px;background:var(--surface);color:var(--ink);font-family:inherit;
+  box-shadow:inset 5px 5px 10px var(--shadow-d-sm),inset -5px -5px 10px var(--shadow-l-sm)}
+input:focus,select:focus{outline:none;box-shadow:inset 5px 5px 10px var(--shadow-d),inset -5px -5px 10px var(--shadow-l),0 0 0 2px rgba(92,139,57,.35)}
+input:disabled{background:#eef2e4;color:var(--muted-2);box-shadow:none}
+
+.btn{padding:12px 16px;border:none;border-radius:14px;background:var(--surface);color:var(--ink);font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  box-shadow:6px 6px 12px var(--shadow-d-sm),-6px -6px 12px var(--shadow-l-sm);transition:box-shadow .15s}
+.btn:active{box-shadow:inset 4px 4px 8px var(--shadow-d),inset -4px -4px 8px var(--shadow-l)}
+.btn.primary{background:linear-gradient(135deg,var(--accent-light),var(--accent-2));color:#fff;box-shadow:6px 6px 14px rgba(63,107,40,.4),-4px -4px 10px rgba(255,255,255,.5)}
+.btn.primary:active{box-shadow:inset 4px 4px 10px rgba(0,0,0,.25)}
+.btn.ghost{background:transparent;border:1.5px solid var(--muted-2);box-shadow:none;color:var(--ink-soft)}
+.btn.ghost:active{box-shadow:none;background:rgba(255,255,255,.4)}
+.btn.warn{background:var(--warn-bg);color:var(--warn);box-shadow:none}
+.btn.danger{background:linear-gradient(135deg,#e0685a,#c0392b);color:#fff;box-shadow:6px 6px 14px rgba(192,57,43,.35),-4px -4px 10px rgba(255,255,255,.5)}
+.btn.danger:active{box-shadow:inset 4px 4px 10px rgba(0,0,0,.25)}
+.btn.small{padding:8px 12px;font-size:13px;border-radius:11px}
+.btn.big{width:100%;padding:15px;font-size:17px;margin-top:16px}
+.mini-btn{border:none;background:none;color:var(--accent-2);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:0}
+
+/* APPBAR */
+.appbar{background:linear-gradient(135deg,#5c8b39,#3f6b28);color:#fff;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px;
+  box-shadow:0 4px 14px rgba(63,107,40,.35)}
+.appbar-title{font-size:17px;font-weight:700;font-family:'Poppins',sans-serif}
+.appbar-sub{font-size:12px;opacity:.9}
+.appbar-actions{display:flex;gap:6px;flex-shrink:0}
+.appbar .btn.ghost{color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* TABS */
+.tabs{display:flex;background:var(--surface);border-bottom:none;position:sticky;top:0;z-index:20;box-shadow:0 3px 10px var(--shadow-d-sm)}
+.tab{flex:1;padding:13px 6px;border:none;background:none;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;font-family:inherit}
+.tab.active{color:var(--accent-2);border-bottom-color:var(--accent-2)}
+.tabpanel{padding:10px}
+
+/* SESSION / PROGRESS */
+.progbar{background:var(--surface);border-radius:16px;padding:12px 14px;margin-bottom:8px;box-shadow:8px 8px 16px var(--shadow-d),-8px -8px 16px var(--shadow-l)}
+.progtext{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);margin-bottom:7px}
+.progtext b{color:var(--ink);font-size:14px}
+.progtrack{height:7px;background:var(--surface-2);border-radius:99px;overflow:hidden;box-shadow:inset 2px 2px 4px var(--shadow-d-sm),inset -2px -2px 4px var(--shadow-l-sm)}
+.progfill{height:100%;background:linear-gradient(90deg,var(--accent-light),var(--accent-2));border-radius:99px;transition:width .3s}
+.tiphint{font-size:11.5px;color:var(--info);background:var(--info-bg);border:none;padding:9px 11px;border-radius:12px;margin-bottom:8px;line-height:1.5}
+.queuebar{background:var(--warn-bg);color:var(--warn);padding:9px;border-radius:12px;font-size:13px;margin-bottom:8px;text-align:center}
+.adminbar{background:var(--info-bg);border:none;border-radius:14px;padding:10px 12px;margin-bottom:10px;font-size:13px;color:var(--accent-2)}
+.adminbar .row{margin-top:8px;margin-bottom:0}
+.backdate{background:var(--warn-bg);color:var(--warn);padding:8px;border-radius:11px;font-size:12px;margin-bottom:8px;text-align:center}
+
+/* METER CARD */
+.mlist{display:flex;flex-direction:column;gap:8px}
+.mcard{background:var(--surface);border-radius:14px;overflow:hidden;box-shadow:5px 5px 12px var(--shadow-d-sm),-5px -5px 12px var(--shadow-l-sm);border:1.5px solid transparent;transition:opacity .2s,border-color .2s,box-shadow .2s}
+.mcard.open{border-color:var(--accent);box-shadow:inset 4px 4px 10px var(--shadow-d-sm),inset -4px -4px 10px var(--shadow-l-sm)}
+.mcard.saved{background:var(--surface-2);box-shadow:none}
+.mcard.saved .mc-head{opacity:.55}
+.mcard.saved.open{background:var(--surface);box-shadow:inset 4px 4px 10px var(--shadow-d-sm),inset -4px -4px 10px var(--shadow-l-sm);border-color:#7c9d3e}
+.mcard.saved.open .mc-head{opacity:1}
+.mcard.saving{background:var(--surface-2);opacity:.72}
+.mcard.failed{border-color:var(--danger);background:var(--danger-bg)}
+.mcard.m-edit.open{border-color:#7c6a3e}
+.mcard.m-unlock.open{border-color:var(--warn)}
+
+.mc-head{display:flex;align-items:center;gap:9px;padding:12px 13px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.mcard.saving .mc-head{cursor:wait}
+.mc-no{flex:0 0 24px;height:24px;line-height:24px;text-align:center;background:var(--surface-2);color:var(--ink-soft);border-radius:8px;font-size:12px;font-weight:700;
+  box-shadow:2px 2px 5px var(--shadow-d-sm),-2px -2px 5px var(--shadow-l-sm)}
+.mcard.saved .mc-no{background:#cdd9ae;box-shadow:none}
+.mc-title{flex:1;min-width:0;line-height:1.25}
+.mc-title b{display:block;font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.mc-title small{display:block;font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mc-right{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.mc-val{font-size:14px;font-weight:800;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.mc-tag{font-size:11px;padding:3px 8px;border-radius:99px;font-weight:600;white-space:nowrap}
+.mc-tag.wait{color:var(--accent-2);background:#dcecc4}
+.mc-tag.save{color:var(--accent-2);background:#dcecc4}
+.mc-tag.err{color:var(--danger);background:var(--danger-bg)}
+.mc-tag.q{color:var(--warn);background:var(--warn-bg)}
+.mc-tap{font-size:10.5px;color:#6a5a2e;background:#f3ecd2;padding:3px 7px;border-radius:99px;font-weight:700;animation:pop .2s}
+@keyframes pop{from{transform:scale(.7)}to{transform:scale(1)}}
+.mc-arrow{font-size:10px;color:var(--muted-2)}
+.mc-ab{border:none;background:var(--surface-2);border-radius:9px;padding:5px 8px;font-size:12px;cursor:pointer;line-height:1;font-family:inherit;
+  box-shadow:2px 2px 5px var(--shadow-d-sm),-2px -2px 5px var(--shadow-l-sm)}
+.mc-ab:active{box-shadow:inset 2px 2px 5px var(--shadow-d-sm),inset -2px -2px 5px var(--shadow-l-sm)}
+.mc-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);animation:blink .9s infinite}
+@keyframes blink{0%,100%{opacity:.25}50%{opacity:1}}
+
+.mc-body{padding:10px 13px 13px;border-top:1px dashed var(--surface-2)}
+.mc-hint{font-size:12px;color:var(--ink-soft);background:var(--surface-2);padding:8px 10px;border-radius:10px;margin-bottom:9px;line-height:1.55}
+.mc-inrow{display:flex;gap:8px;align-items:stretch}
+.mc-input{flex:1;font-size:22px;text-align:center;letter-spacing:2px;font-weight:800;padding:10px}
+.mc-save{flex:0 0 auto;padding:10px 16px;white-space:nowrap}
+.mc-fullchk{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--muted);margin:9px 0 0}
+.mc-fullchk input{width:auto;box-shadow:none}
+.mc-preview{margin-top:9px;font-size:13px;padding:8px 10px;border-radius:10px;line-height:1.5}
+.mc-preview:empty{display:none}
+.mc-preview.ok{background:var(--ok-bg);color:var(--ok)}
+.mc-preview.warn{background:var(--danger-bg);color:var(--danger)}
+.mc-preview.critical{background:#6b2018;color:#fff}
+
+/* TOAST */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;max-width:92%;padding:11px 18px;border-radius:99px;font-size:13px;font-weight:600;z-index:400;box-shadow:0 6px 22px rgba(51,66,31,.3);animation:slideup .25s}
+.toast.ok{background:var(--ok);color:#fff}
+.toast.err{background:var(--danger);color:#fff}
+.toast.warn{background:var(--warn);color:#fff}
+.toast.info{background:var(--ink);color:#fff}
+@keyframes slideup{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+
+.msg{font-size:13px;padding:9px 0;text-align:center;line-height:1.6}
+.msg.err{color:var(--danger)}.msg.ok{color:var(--ok)}.msg.warn{color:var(--warn)}
+.row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.row .btn{flex:0 0 auto}
+.row input,.row select{flex:1;min-width:110px}
+.pill{font-size:11px;padding:4px 9px;border-radius:999px;background:var(--surface-2);color:var(--ink-soft);white-space:nowrap}
+.pill.green{background:var(--ok-bg);color:var(--ok)}
+.pill.red{background:var(--danger-bg);color:var(--danger)}
+.pill.gray{background:var(--surface-2);color:var(--ink-soft)}
+
+/* REPORT */
+.reportbar{background:var(--surface);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:8px 8px 16px var(--shadow-d),-8px -8px 16px var(--shadow-l)}
+.reportbar .row:last-child{margin-bottom:0}
+.optrow{gap:16px}
+.optrow .chkline{flex:0 0 auto;font-size:13px}
+.imgbox{background:var(--surface);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:8px 8px 16px var(--shadow-d),-8px -8px 16px var(--shadow-l)}
+.imgbox img{width:100%;border-radius:10px;display:block;border:1px solid var(--surface-2)}
+.imgactions{margin-top:10px;margin-bottom:0}
+.imghint{font-size:11px;color:var(--muted-2);text-align:center;margin-top:8px}
+.summary-wrap{overflow-x:auto}
+.rp{background:#000;border:3px solid #fff;color:#fff;min-width:340px;font-size:13px}
+.rp-date{display:flex;align-items:center;gap:10px;padding:12px 10px;border-bottom:2px solid #fff;font-weight:800;font-size:16px}
+.rp-date span:first-child{margin-right:auto}
+.rp-title{text-align:center;font-weight:800;font-size:15px;padding:10px;border-bottom:2px solid #fff}
+.rp-row{display:grid;grid-template-columns:38px 1.25fr 1.25fr .9fr;border-bottom:1px solid #fff}
+.rp-row.u{grid-template-columns:38px 1.15fr 1.15fr .85fr .55fr}
+.rp-row:last-child{border-bottom:none}
+.rp-row > div{padding:9px 5px;border-right:1px solid #fff;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.3;word-break:break-word;min-height:42px}
+.rp-row > div:last-child{border-right:none}
+.rp-head{font-weight:800;font-size:12px;border-bottom:2px solid #fff}
+.rp-no{font-size:14px}
+.rp-nm,.rp-lc{font-weight:600}
+.rp-nu{font-weight:800;font-size:15px;font-variant-numeric:tabular-nums}
+.rp-us{font-size:12px;color:#c9d4e3}
+.rp-alert .rp-nu,.rp-crit .rp-nu{color:#ff8f8f}
+.rp-sum{background:#1c2413;color:#dce8c4;font-size:12px;padding:10px;text-align:center}
+
+/* HISTORY */
+.srow{display:grid;grid-template-columns:1.4fr 1.4fr .6fr;gap:8px;align-items:center;background:var(--surface);padding:12px;border-radius:13px;margin-bottom:6px;font-size:13px;
+  box-shadow:4px 4px 10px var(--shadow-d-sm),-4px -4px 10px var(--shadow-l-sm)}
+.sname{font-weight:600;color:var(--ink)}
+.snum{color:var(--muted);font-size:12px}
+.suse{text-align:right;font-weight:700}
+.suse.red{color:var(--danger)}.suse.crit{color:#6b2018}.suse.green{color:var(--ok)}
+.empty{text-align:center;color:var(--muted-2);padding:30px}
+
+/* ADMIN */
+.adminbox{background:var(--surface);border-radius:18px;padding:14px;margin-bottom:12px;box-shadow:8px 8px 16px var(--shadow-d),-8px -8px 16px var(--shadow-l)}
+.adminbox.danger{border:2px solid #f0c6bf;background:#fbf3f1}
+.adminbox-head{font-weight:700;font-size:15px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--surface-2);color:var(--ink);font-family:'Poppins',sans-serif}
+.danger-note{font-size:13px;color:#6b2018;background:var(--danger-bg);padding:10px;border-radius:11px;line-height:1.7;margin-bottom:12px}
+.tips{font-size:13px;color:var(--ink-soft);padding-left:20px;line-height:1.9}
+.chkline{display:flex;align-items:center;gap:8px;font-weight:400;margin:0}
+.chkline input{width:auto}
+.ucard{background:var(--surface-2);border-radius:13px;padding:11px;margin-bottom:7px}
+.ucard.off{opacity:.55}
+.uc-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.uc-mail{font-size:12px;color:var(--muted);margin-bottom:8px}
+.admin-actions{margin-bottom:0;gap:6px}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(51,66,31,.55);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px}
+.modal-card{background:var(--surface);border-radius:20px;padding:22px;width:100%;max-width:420px;max-height:88vh;overflow-y:auto;box-shadow:16px 16px 34px rgba(51,66,31,.35),-10px -10px 24px rgba(255,255,255,.5)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;font-size:16px;margin-bottom:10px;color:var(--ink);font-family:'Poppins',sans-serif}
+
+/* LOADING */
+.loading{position:fixed;inset:0;background:rgba(238,246,223,.75);display:flex;align-items:center;justify-content:center;z-index:300}
+.spinner{width:38px;height:38px;border:4px solid var(--surface-2);border-top-color:var(--accent-2);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SESSION TOGGLE (เที่ยงคืน) */
+.sessionbar{display:flex;gap:8px;margin-bottom:10px}
+.seg-btn{flex:1;padding:10px;border-radius:14px;border:none;background:var(--surface-2);font-weight:600;cursor:pointer;color:var(--ink-soft);font-family:inherit;
+  box-shadow:4px 4px 10px var(--shadow-d-sm),-4px -4px 10px var(--shadow-l-sm)}
+.seg-btn.active{background:linear-gradient(135deg,var(--accent-light),var(--accent-2));color:#fff;box-shadow:inset 3px 3px 6px rgba(0,0,0,.2)}
+.midnight-status{padding:10px 14px;border-radius:12px;margin-bottom:10px;font-weight:600;font-size:13px}
+.midnight-status.open{background:var(--ok-bg);color:var(--ok)}
+.midnight-status.closed{background:var(--danger-bg);color:var(--danger)}
+</style>
 </head>
 <body>
 
 <div id="netbar" class="netbar hidden">ออฟไลน์ — ข้อมูลจะถูกส่งอัตโนมัติเมื่อกลับมาออนไลน์</div>
-
-<!-- ══════════ LOGIN (สำรอง — ปกติจะไม่โชว์ เพราะล็อกอินอัตโนมัติผ่าน Supabase) ══════════ -->
-<section id="loginView" class="view">
-  <style>
-    #loginView { background: linear-gradient(160deg,#eef1f7,#dde3ee); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; }
-    .neu-card { width:100%; max-width:360px; background:#e9edf5; border-radius:28px; padding:38px 28px 30px; box-shadow: 14px 14px 30px rgba(163,177,198,0.55), -14px -14px 30px rgba(255,255,255,0.85); text-align:center; }
-    .neu-avatar { width:76px; height:76px; border-radius:50%; margin:0 auto 18px; display:flex; align-items:center; justify-content:center; background:#e9edf5; box-shadow: 8px 8px 16px rgba(163,177,198,0.55), -8px -8px 16px rgba(255,255,255,0.85); }
-    .neu-avatar svg { width:32px; height:32px; }
-    .neu-title { font-family:'Poppins',sans-serif; font-weight:600; font-size:21px; color:#2c3a55; margin:0 0 4px; }
-    .neu-sub { font-family:'Inter',sans-serif; font-size:13.5px; color:#8891a5; margin:0 0 26px; line-height:1.5; }
-    .neu-field { position:relative; margin-bottom:16px; text-align:left; }
-    .neu-field svg.f-icon { position:absolute; left:16px; top:50%; transform:translateY(-50%); width:18px; height:18px; opacity:.55; pointer-events:none; }
-    .neu-field input { width:100%; box-sizing:border-box; padding:14px 44px 14px 46px; border:none; border-radius:16px; background:#e9edf5; font-family:'Inter',sans-serif; font-size:15px; color:#2c3a55;
-      box-shadow: inset 6px 6px 12px rgba(163,177,198,0.5), inset -6px -6px 12px rgba(255,255,255,0.85); }
-    .neu-field input::placeholder { color:#a7aec0; }
-    .neu-field input:focus { outline:none; }
-    .neu-eye { position:absolute; right:14px; top:50%; transform:translateY(-50%); width:22px; height:22px; opacity:.55; cursor:pointer; border:none; background:none; padding:0; display:flex; align-items:center; justify-content:center; }
-    .neu-btn { width:100%; margin-top:6px; padding:15px; border:none; border-radius:16px; font-family:'Poppins',sans-serif; font-weight:600; font-size:15px; letter-spacing:.3px; color:#fff;
-      background:linear-gradient(135deg,#5c8bff,#3f66e0); box-shadow: 6px 6px 14px rgba(76,110,214,0.4), -4px -4px 10px rgba(255,255,255,0.5); cursor:pointer; }
-    .neu-btn:active { box-shadow: inset 4px 4px 10px rgba(0,0,0,.2); }
-    .neu-hint { margin-top:18px; font-family:'Inter',sans-serif; font-size:12.5px; color:#9aa1b3; }
-    .neu-ghost { margin-top:14px; width:100%; padding:12px; border:none; border-radius:16px; background:#e9edf5; color:#5c6a85; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600;
-      box-shadow: 6px 6px 12px rgba(163,177,198,0.5), -6px -6px 12px rgba(255,255,255,0.85); cursor:pointer; }
-  </style>
-
-  <div class="neu-card">
-    <div class="neu-avatar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#3f66e0" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6.5 6.8 6.5 10.8a6.5 6.5 0 1 1-13 0C5.5 9.8 12 3 12 3Z"/></svg>
-    </div>
-    <h1 class="neu-title">ระบบจดมิเตอร์น้ำ</h1>
-    <p class="neu-sub">เข้าสู่ระบบเพื่อบันทึกค่ามิเตอร์<br>16 จุดตรวจวัด</p>
-
-    <div class="neu-field">
-      <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="#3f4a63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.4"/><path d="M4.5 20c1.6-3.6 4.6-5.4 7.5-5.4s5.9 1.8 7.5 5.4"/></svg>
-      <input id="loginEmail" type="text" placeholder="ชื่อผู้ใช้" autocomplete="username">
-    </div>
-    <div class="neu-field">
-      <svg class="f-icon" viewBox="0 0 24 24" fill="none" stroke="#3f4a63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9" rx="2.4"/><path d="M8 10.5V7.8a4 4 0 1 1 8 0v2.7"/></svg>
-      <input id="loginPin" type="password" inputmode="numeric" placeholder="PIN" autocomplete="current-password">
-      <button type="button" id="btnTogglePin" class="neu-eye" aria-label="แสดง/ซ่อน PIN">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#3f4a63" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.8-6.5 10-6.5S22 12 22 12s-3.8 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.6"/></svg>
-      </button>
-    </div>
-
-    <button id="btnLogin" class="neu-btn">เข้าสู่ระบบ</button>
-    <button id="btnInstallLogin" class="neu-ghost hidden">📲 ติดตั้งแอปลงเครื่อง</button>
-    <p class="neu-hint">ลืม PIN? ติดต่อผู้ดูแลระบบ</p>
-    <div id="loginMsg" class="msg"></div>
-  </div>
-</section>
+<div id="bootError" class="msg err hidden" style="padding:24px 16px"></div>
 
 <!-- ══════════ MAIN ══════════ -->
 <section id="mainView" class="view hidden">
@@ -82,7 +256,6 @@
     </div>
     <div class="appbar-actions">
       <button id="btnInstall" class="btn ghost small hidden">📲</button>
-      <button id="btnLogout" class="btn ghost small">ออก</button>
     </div>
   </header>
 
@@ -95,14 +268,6 @@
 
   <!-- ───── TAB: ENTRY ───── -->
   <div id="tab-entry" class="tabpanel">
-    <style>
-      .sessionbar { display:flex; gap:8px; margin-bottom:10px; }
-      .seg-btn { flex:1; padding:10px; border-radius:10px; border:1px solid #ccc; background:#f2f2f2; font-weight:600; cursor:pointer; }
-      .seg-btn.active { background:#0f766e; color:#fff; border-color:#0f766e; }
-      .midnight-status { padding:10px 14px; border-radius:10px; margin-bottom:10px; font-weight:600; }
-      .midnight-status.open { background:#e7f7ec; color:#146c2e; }
-      .midnight-status.closed { background:#fdeceb; color:#a12a22; }
-    </style>
     <div class="sessionbar">
       <button id="btnSessionDay" class="seg-btn active" data-session="DAY">🌤️ รอบปกติ</button>
       <button id="btnSessionMidnight" class="seg-btn" data-session="MIDNIGHT">🌙 รอบเที่ยงคืน</button>
@@ -300,7 +465,9 @@
       window.AUTO_LOGIN = { username: data.session.email, pin: data.session.pin };
     } catch (err) {
       console.error('Supabase bridge error:', err);
-      // ไม่ตั้งค่า AUTO_LOGIN — ปล่อยให้ระบบโชว์หน้า login สำรองให้กรอกเองแทน
+      var be = document.getElementById('bootError');
+      be.textContent = '⚠️ เข้าระบบจดมิเตอร์ไม่สำเร็จ: ' + err.message;
+      be.classList.remove('hidden');
     }
 
     await loadScriptSeq('https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js');
