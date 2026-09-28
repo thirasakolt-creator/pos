@@ -89,11 +89,11 @@ function addDaysStr(dateStr, delta) {
   dt.setUTCDate(dt.getUTCDate() + delta);
   return dt.toISOString().slice(0, 10);
 }
-/* รอบเที่ยงคืน: เปิดรับ 21:00 ของวัน N ถึง 05:00 ของวัน N+1 → คืนค่าวันที่ N ถ้าเปิดอยู่ ไม่งั้นคืน null */
+/* รอบเที่ยงคืน: เปิดรับ 21:00 ของวัน N ถึง 06:00 ของวัน N+1 → คืนค่าวันที่ N ถ้าเปิดอยู่ ไม่งั้นคืน null */
 function midnightBusinessDate() {
   const h = bangkokHour();
   if (h >= 21) return todayStr();
-  if (h < 5) return addDaysStr(todayStr(), -1);
+  if (h < 6) return addDaysStr(todayStr(), -1);
   return null;
 }
 
@@ -248,7 +248,7 @@ async function fbSubmitReadings(p) {
   if (session === 'MIDNIGHT') {
     const mbd = midnightBusinessDate();
     if (!isAdmin) {
-      if (!mbd) throw new Error('ปิดรับข้อมูลรอบเที่ยงคืน (เปิดรับเวลา 21:00–05:00 น. เท่านั้น)');
+      if (!mbd) throw new Error('ปิดรับข้อมูลรอบเที่ยงคืน (เปิดรับเวลา 21:00–06:00 น. เท่านั้น)');
       date = mbd;
     } else {
       date = date || mbd || todayStr();
@@ -604,7 +604,7 @@ function renderMidnightStatus() {
   const open = S.day && S.day.midnightOpen;
   box.className = 'midnight-status ' + (open ? 'open' : 'closed');
   box.textContent = open
-    ? '🌙 เปิดรับข้อมูลรอบเที่ยงคืน (ของวันที่ ' + S.viewDate + ') ถึง 05:00 น.'
+    ? '🌙 เปิดรับข้อมูลรอบเที่ยงคืน (ของวันที่ ' + S.viewDate + ') ถึง 06:00 น.'
     : '🌙 ปิดรับข้อมูลรอบเที่ยงคืนแล้ว — เปิดอีกครั้งเวลา 21:00 น.';
 }
 
