@@ -3,12 +3,12 @@
  * Project settings → General → Your apps → SDK setup and configuration
  ***/
 const firebaseConfig = {
-  apiKey: "ใส่ค่าจาก Firebase Console ตรงนี้",
-  authDomain: "your-project-id.firebaseapp.com",
-  projectId: "your-project-id",
-  storageBucket: "your-project-id.firebasestorage.app",
-  messagingSenderId: "000000000000",
-  appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxxxx"
+  apiKey: "AIzaSyCMYGK5EbF_gJA06-C-T1i2TK3b7UoqjdE",
+  authDomain: "meter-4a840.firebaseapp.com",
+  projectId: "meter-4a840",
+  storageBucket: "meter-4a840.firebasestorage.app",
+  messagingSenderId: "267034214534",
+  appId: "1:267034214534:web:b429893106dd7227551107"
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
