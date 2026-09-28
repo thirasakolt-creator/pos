@@ -1,7 +1,7 @@
 {
   "name": "ระบบแจ้งซ่อม มณีจันทร์",
   "short_name": "แจ้งซ่อม",
-  "start_url": "./routine.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f6f7",
   "theme_color": "#0f766e",
