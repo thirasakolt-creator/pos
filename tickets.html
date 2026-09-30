@@ -576,9 +576,11 @@
         <label>ผู้ตรวจ</label>
         <input type="text" id="d-inspector" value="${t.inspector || ''}">
       </div>
-
-      <button class="btn-primary" id="save-btn" onclick="saveDetail()">บันทึก</button>
-      <button class="btn-primary btn-danger" onclick="closeTicket()">ปิดงานซ่อม</button>
+      <button class="btn-primary btn-danger" onclick="closeTicket()">ดำเนินการเรียบร้อย</button>
+      <button class="btn-primary" id="save-btn" onclick="waitTicket()">รอจัดซื้ออุปกรณ์</button>
+      <button class="btn-primary" id="save-btn" onclick="supplyTicket()">แจ้งช่างนอก</button>
+      <button class="btn-primary" id="save-btn" onclick="cancelTicket()">ยกเลิกแจ้งซ่อม</button>
+      
     `;
 
     document.getElementById('d-photo-after-camera').addEventListener('change', handleAfterPhotoChange);
@@ -636,6 +638,54 @@
       alert('เกิดข้อผิดพลาด: ' + err.message);
     } finally {
       btn.disabled = false; btn.textContent = 'บันทึก';
+    }
+  }
+
+    async function waitTicket() {
+    if (!confirm('ยืนยันอัปเดตงานซ่อมนี้?')) return;
+    try {
+      const payload = await buildUpdatePayload();
+      payload.progress = 'รอจัดซื้ออุปกรณ์';
+      if (!payload.completed_date) payload.completed_date = new Date().toISOString().slice(0, 10);
+      const { data, error } = await sb.from('repair_tickets').update(payload).eq('id', currentTicket.id).select();
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error('ปิดงานไม่สำเร็จ อาจไม่มีสิทธิ์แก้ไขงานนี้ (ติดต่อแอดมิน)');
+      alert('อัปเดตงานซ่อมนี้เรียบร้อย');
+      showList();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+  }
+
+      async function supplyTicket() {
+    if (!confirm('ยืนยันแจ้งช่างนอก?')) return;
+    try {
+      const payload = await buildUpdatePayload();
+      payload.progress = 'ติดต่อช่างนอก';
+      if (!payload.completed_date) payload.completed_date = new Date().toISOString().slice(0, 10);
+      const { data, error } = await sb.from('repair_tickets').update(payload).eq('id', currentTicket.id).select();
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error('ปิดงานไม่สำเร็จ อาจไม่มีสิทธิ์แก้ไขงานนี้ (ติดต่อแอดมิน)');
+      alert('ติดต่อช่างนอกเรียบร้อย');
+      showList();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
+    }
+  }
+
+        async function cancelTicke() {
+    if (!confirm('ยืนยันยกเลิกงานแจ้งซ่อม?')) return;
+    try {
+      const payload = await buildUpdatePayload();
+      payload.progress = 'ยกเลิกแจ้งซ่อม';
+      if (!payload.completed_date) payload.completed_date = new Date().toISOString().slice(0, 10);
+      const { data, error } = await sb.from('repair_tickets').update(payload).eq('id', currentTicket.id).select();
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error('ปิดงานไม่สำเร็จ อาจไม่มีสิทธิ์แก้ไขงานนี้ (ติดต่อแอดมิน)');
+      alert('ยกเลิกงานแจ้งซ่อมเรียบร้อย');
+      showList();
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด: ' + err.message);
     }
   }
 
