@@ -183,6 +183,15 @@
       <span id="user-role">-</span><br><br>
       แตะ ☰ มุมซ้ายบนเพื่อเปิดเมนู
     </div>
+
+    <div id="push-banner" style="display:none; background:#fff; border-radius:14px; padding:16px; margin-top:14px; text-align:center;">
+      <div style="font-size:14px; color:#374151; margin-bottom:10px;">
+        🔔 เปิดการแจ้งเตือน จะได้รู้ทันทีเมื่อมีงานแจ้งซ่อมใหม่ หรือได้รับมอบหมายงาน
+      </div>
+      <button id="push-enable-btn" style="padding:11px 20px; border:none; border-radius:10px; background:#0f766e; color:#fff; font-size:14px; font-weight:600; cursor:pointer;">
+        เปิดการแจ้งเตือน
+      </button>
+    </div>
   </main>
 </div>
 
@@ -199,6 +208,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="push-setup.js"></script>
 <script>
   // ตั้งค่า Supabase project ของคุณตรงนี้
   const SUPABASE_URL = 'https://zboyurgqktcwusmamkjl.supabase.co';
@@ -276,12 +286,13 @@
   }
 
   const ROLE_LABEL = { admin: 'แอดมิน', supervisor: 'หัวหน้าช่าง', technician: 'ช่างเทคนิค' };
+  let myUserId = null;
 
   async function loadProfileAndShowApp(authUser) {
     // จับคู่ auth user กับตาราง users ด้วย email
     const { data, error } = await sb
       .from('users')
-      .select('name, role, active')
+      .select('id, name, role, active')
       .ilike('email', authUser.email)
       .single();
 
@@ -296,6 +307,7 @@
       return;
     }
 
+    myUserId = data.id;
     document.getElementById('user-name').textContent = data.name;
     document.getElementById('user-role').textContent = ROLE_LABEL[data.role] || data.role;
     document.getElementById('sidebar-name').textContent = data.name;
@@ -306,7 +318,23 @@
 
     loginScreen.style.display = 'none';
     appScreen.style.display = 'block';
+
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
+      const already = await isPushEnabled();
+      if (!already) document.getElementById('push-banner').style.display = 'block';
+    }
   }
+
+  document.getElementById('push-enable-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('push-enable-btn');
+    btn.disabled = true; btn.textContent = 'กำลังเปิด...';
+    const ok = await enablePushNotifications(sb, myUserId);
+    if (ok) {
+      document.getElementById('push-banner').style.display = 'none';
+    } else {
+      btn.disabled = false; btn.textContent = 'เปิดการแจ้งเตือน';
+    }
+  });
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
